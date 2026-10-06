@@ -16,3 +16,6 @@ wheels/
 # Source PDFs (large / copyrighted) - keep out of git
 data/raw/*.pdf
 *:Zone.Identifier
+
+.env
+.env-*
