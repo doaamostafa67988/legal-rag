@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Bilingual Egyptian Civil Code RAG: parent-child retrieval, reranking and GraphRAG"
 requires-python = ">=3.11"
 dependencies = [
+    "pydantic-settings>=2.15.0",
     "pymupdf>=1.24",
 ]
 
