@@ -5,6 +5,7 @@ description = "Bilingual Egyptian Civil Code RAG: parent-child retrieval, rerank
 requires-python = ">=3.11"
 dependencies = [
     "chromadb>=1.5.9",
+    "fastapi>=0.142.2",
     "groq>=1.7.0",
     "onnxruntime>=1.30.0",
     "pydantic-settings>=2.15.0",
@@ -12,6 +13,7 @@ dependencies = [
     "python-dotenv>=1.2.4",
     "sentence-transformers>=6.1.0",
     "torch>=2.14.1",
+    "uvicorn[standard]>=0.54.0",
 ]
 
 [dependency-groups]
@@ -21,6 +23,7 @@ dev = [
     "pre-commit>=3.7",
     "jupyter>=1.1.1",
     "ipykernel>=7.4.0",
+    "httpx>=0.28.1",
 ]
 export = [
     "onnx>=1.23.2",

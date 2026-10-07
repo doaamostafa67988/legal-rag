@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -7,7 +8,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="LEGAL_RAG_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_prefix="LEGAL_RAG_", env_file=ROOT / ".env", extra="ignore"
+    )
 
     raw_pdf: Path = ROOT / "data" / "raw" / "laws.pdf"
     corpus_json: Path = ROOT / "data" / "processed" / "civil_code.json"
@@ -15,6 +18,7 @@ class Settings(BaseSettings):
     onnx_dir: Path = ROOT / "models" / "e5-small-onnx"
     embedding_model: str = "intfloat/multilingual-e5-small"
     log_level: str = "INFO"
+    embedder_backend: Literal["onnx", "torch"] = "onnx"  # what the API serves with
     groq_model: str = "qwen/qwen3.8-27b"
     groq_api_key: SecretStr | None = Field(default=None, validation_alias="GROQ_API_KEY")
     low_score_threshold: float = 0.75  # provisional: calibrate with off-topic queries
