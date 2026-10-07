@@ -10,6 +10,8 @@ class Settings(BaseSettings):
 
     raw_pdf: Path = ROOT / "data" / "raw" / "laws.pdf"
     corpus_json: Path = ROOT / "data" / "processed" / "civil_code.json"
+    chroma_dir: Path = ROOT / "chroma_db"
+    embedding_model: str = "intfloat/multilingual-e5-small"
     host: str = "0.0.0.0"
     port: int = 8000
 

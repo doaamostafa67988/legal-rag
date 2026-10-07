@@ -38,6 +38,8 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m 'not integration'"
+markers = ["integration: needs the real e5 model (downloads ~0.5 GB); run with -m integration"]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
