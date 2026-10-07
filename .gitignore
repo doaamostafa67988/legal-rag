@@ -19,3 +19,9 @@ data/raw/*.pdf
 
 .env
 .env-*
+
+# Vector store is rebuilt by legal_rag.rag ingest
+chroma_db/
+
+# Windows download markers
+*:Zone.Identifier

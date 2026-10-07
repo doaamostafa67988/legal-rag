@@ -15,6 +15,11 @@ class Article:
     book: str
     chapter: str
     section: str
+    topic: str
+    source_page: int
+    volume: str = ""  # the Arabic "الكتاب" level, an extra on top of the handbook schema
+    en_missing: bool = False  # English text absent in the source PDF (article 452)
+    ar_incomplete: bool = False  # Arabic text incomplete in the source PDF (article 1022)
 
 
 def load_corpus(path: Path | None = None) -> list[Article]:
@@ -32,6 +37,11 @@ def load_corpus(path: Path | None = None) -> list[Article]:
             book=r["book"],
             chapter=r["chapter"],
             section=r["section"],
+            topic=r["topic"],
+            source_page=r["source_page"],
+            volume=r["volume"],
+            en_missing=r["en_missing"],
+            ar_incomplete=r["ar_incomplete"],
         )
         for r in records
     ]
