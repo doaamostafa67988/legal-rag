@@ -25,3 +25,6 @@ chroma_db/
 
 # Windows download markers
 *:Zone.Identifier
+
+# Exported model artifacts (large; tracked with DVC in Module 2)
+models/
