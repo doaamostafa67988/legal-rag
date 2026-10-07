@@ -24,6 +24,7 @@ dev = [
     "jupyter>=1.1.1",
     "ipykernel>=7.4.0",
     "httpx>=0.28.1",
+    "pytest-cov>=7.1.0",
 ]
 export = [
     "onnx>=1.23.2",
@@ -46,7 +47,7 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-m 'not integration'"
+addopts = "-m 'not integration' --cov=src/legal_rag --cov-report=term-missing --cov-fail-under=70"
 markers = ["integration: needs the real e5 model (downloads ~0.5 GB); run with -m integration"]
 
 [[tool.uv.index]]
@@ -56,3 +57,7 @@ explicit = true
 
 [tool.uv.sources]
 torch = { index = "pytorch-cpu" }
+
+[tool.coverage.run]
+# one-off scripts that need the real model; exercised by `pytest -m integration --no-cov`
+omit = ["*/legal_rag/benchmark.py", "*/legal_rag/export.py"]

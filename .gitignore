@@ -28,3 +28,6 @@ chroma_db/
 
 # Exported model artifacts (large; tracked with DVC in Module 2)
 models/
+
+.coverage
+htmlcov/
