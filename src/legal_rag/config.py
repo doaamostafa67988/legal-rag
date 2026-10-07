@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     corpus_json: Path = ROOT / "data" / "processed" / "civil_code.json"
     chroma_dir: Path = ROOT / "chroma_db"
     embedding_model: str = "intfloat/multilingual-e5-small"
+    log_level: str = "INFO"
+    low_score_threshold: float = 0.75  # provisional: calibrate with off-topic queries
     host: str = "0.0.0.0"
     port: int = 8000
 

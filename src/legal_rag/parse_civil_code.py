@@ -20,6 +20,7 @@ from pathlib import Path
 import pymupdf
 
 from legal_rag.config import settings
+from legal_rag.logging_conf import configure_logging, correlation_context
 
 log = logging.getLogger(__name__)
 
@@ -311,10 +312,9 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("pdf", nargs="?", default=str(settings.raw_pdf))
     ap.add_argument("out", nargs="?", default=str(settings.corpus_json))
     args = ap.parse_args(argv)
-    logging.basicConfig(
-        level=logging.INFO, format="%(levelname)s %(message)s"
-    )  # JSON logs: step 03
-    build_corpus(args.pdf, args.out)
+    configure_logging(settings.log_level)
+    with correlation_context():
+        build_corpus(args.pdf, args.out)
 
 
 if __name__ == "__main__":
