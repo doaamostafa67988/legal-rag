@@ -1,21 +1,24 @@
-"""FastAPI service: POST /ask, GET /health.
+"""FastAPI service: POST /ask, GET /health, GET /metadata.
 
 The embedder and the Chroma index load once at startup (lifespan), never per request. Every
 request gets a correlation id (X-Request-ID) that appears in all of its log lines.
 """
 
+import hashlib
 import logging
 import re
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from legal_rag.api.schemas import AskRequest, AskResponse, HealthResponse
+from legal_rag.api.schemas import AskRequest, AskResponse, HealthResponse, MetadataResponse
 from legal_rag.config import settings
 from legal_rag.generate import ChatClient, GroqChat, answer
 from legal_rag.logging_conf import configure_logging, correlation_context, correlation_id_var
@@ -24,6 +27,22 @@ from legal_rag.rag import LegalRAG, sources_of
 log = logging.getLogger(__name__)
 
 _VALID_ID = re.compile(r"[A-Za-z0-9_.-]{1,64}")
+
+try:
+    __version__ = version("legal-rag")  # one source of truth: pyproject.toml
+except PackageNotFoundError:  # running from a bare checkout, package not installed
+    __version__ = "0.0.0+unknown"
+
+
+def _sha256(path: Path) -> str | None:
+    """Hash a file in 1 MiB blocks; None if it is not there."""
+    if not path.is_file():
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
 class CorrelationIdMiddleware:
@@ -93,10 +112,11 @@ def create_app(rag: LegalRAG | None = None, chat: ChatClient | None = None) -> F
         except Exception:
             log.exception("startup failed: model or index could not be loaded")
             raise
+        app.state.corpus_sha256 = _sha256(settings.corpus_json)
         log.info("service ready", extra={"documents_indexed": app.state.rag.documents_indexed})
         yield
 
-    app = FastAPI(title="Egyptian Civil Code Q&A", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="Egyptian Civil Code Q&A", version=__version__, lifespan=lifespan)
     app.add_middleware(CorrelationIdMiddleware)
 
     @app.exception_handler(RequestValidationError)
@@ -117,6 +137,20 @@ def create_app(rag: LegalRAG | None = None, chat: ChatClient | None = None) -> F
             status="ok",
             documents_indexed=rag_ready.documents_indexed,
             embedder=type(rag_ready.embedder).__name__,
+        )
+
+    @app.get("/metadata", response_model=MetadataResponse)
+    def metadata(request: Request) -> JSONResponse | MetadataResponse:
+        rag_ready = getattr(request.app.state, "rag", None)
+        if rag_ready is None:
+            return JSONResponse({"detail": "model not loaded"}, status_code=503)
+        return MetadataResponse(
+            service_version=__version__,
+            embedding_model=settings.embedding_model,
+            embedder=type(rag_ready.embedder).__name__,
+            documents_indexed=rag_ready.documents_indexed,
+            groq_model=settings.groq_model,
+            corpus_sha256=request.app.state.corpus_sha256,
         )
 
     @app.post("/ask", response_model=AskResponse)

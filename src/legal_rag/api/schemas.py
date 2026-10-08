@@ -42,3 +42,12 @@ class HealthResponse(BaseModel):
     status: str
     documents_indexed: int
     embedder: str
+
+
+class MetadataResponse(BaseModel):
+    service_version: str
+    embedding_model: str
+    embedder: str
+    documents_indexed: int
+    groq_model: str
+    corpus_sha256: str | None = Field(description="SHA-256 of the corpus JSON on disk at startup")

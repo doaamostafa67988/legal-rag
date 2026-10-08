@@ -1,5 +1,6 @@
 """API tests: real LegalRAG on the tiny fake-embedder index (conftest), fake LLM, no network."""
 
+import hashlib
 import io
 import json
 import logging
@@ -11,6 +12,7 @@ from fastapi.testclient import TestClient
 
 from legal_rag.api import main as api_main
 from legal_rag.api.main import create_app
+from legal_rag.config import settings
 from legal_rag.logging_conf import JsonFormatter
 
 ANSWER = "سن الرشد 21 سنة (المادة 44)"
@@ -82,6 +84,46 @@ def test_health_is_503_when_the_model_is_not_loaded(rag, chat):
     # no `with`: the lifespan never runs, so the process is alive but nothing is loaded
     r = TestClient(create_app(rag=rag, chat=chat)).get("/health")
     assert r.status_code == 503
+
+
+# ---- /metadata -----------------------------------------------------------------------
+
+
+def test_metadata_describes_what_is_being_served(client):
+    r = client.get("/metadata")
+    assert r.status_code == 200
+    body = r.json()
+    assert set(body) == {
+        "service_version",
+        "embedding_model",
+        "embedder",
+        "documents_indexed",
+        "groq_model",
+        "corpus_sha256",
+    }
+    assert body["documents_indexed"] == 3
+    assert body["embedder"] == "FakeEmbedder"
+    assert body["embedding_model"] == settings.embedding_model
+    assert body["groq_model"] == settings.groq_model
+    assert body["service_version"]
+
+
+def test_metadata_hash_matches_the_corpus_file(monkeypatch, rag, chat, tmp_path):
+    corpus = tmp_path / "corpus.json"
+    corpus.write_bytes(b"[]")
+    monkeypatch.setattr(api_main.settings, "corpus_json", corpus)
+    with TestClient(create_app(rag=rag, chat=chat)) as c:
+        assert c.get("/metadata").json()["corpus_sha256"] == hashlib.sha256(b"[]").hexdigest()
+
+
+def test_metadata_hash_is_null_when_the_corpus_file_is_missing(monkeypatch, rag, chat, tmp_path):
+    monkeypatch.setattr(api_main.settings, "corpus_json", tmp_path / "missing.json")
+    with TestClient(create_app(rag=rag, chat=chat)) as c:
+        assert c.get("/metadata").json()["corpus_sha256"] is None
+
+
+def test_metadata_is_503_when_the_model_is_not_loaded(rag, chat):
+    assert TestClient(create_app(rag=rag, chat=chat)).get("/metadata").status_code == 503
 
 
 # ---- /ask ----------------------------------------------------------------------------
