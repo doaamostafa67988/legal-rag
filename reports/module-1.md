@@ -23,6 +23,20 @@
 - Only 10 evaluation questions: 0.9 vs 1.0 is a single question, so treat it as a signal only.
 - Answers come only from the corpus; other laws are not covered.
 
+## Step 2 - Package refactor
+
+- Notebook logic moved into `src/legal_rag/` (ingest, retrieve and generate behind small interfaces).
+- hit@3 after the refactor: `test_baseline_hit_at_3_matches_the_notebook` passes, so the package
+  gives the same 0.9 (9/10) as the notebook.
+- `@timed` decorator (`timing.py`) on `LegalRAG.retrieve`; it logs the duration at DEBUG so the
+  INFO latency line is not duplicated.
+
+## Step 3 - Logging
+
+- JSON logs with a correlation id set per request (`X-Request-ID`, or generated).
+- Check: one `/ask` call returned `x-request-id: 100c9503...`; the same id appears in the three log
+  lines `question served`, `answer generated` and `request`.
+- Question and answer text are not logged at INFO (only their length).
 
 ## Step 4 - Serialization (embedding model: PyTorch vs ONNX)
 
@@ -56,3 +70,31 @@ checkpoint, which uses pickle) that you did not produce yourself.
 **Serving format: ONNX**, because it is cross-language, schema-checked and loads without running
 code, and it lets the serving path run on onnxruntime without PyTorch (to confirm when the Docker
 image is built); latency is about the same as eager PyTorch.
+
+## Step 5 - API
+
+- `POST /ask`, `GET /health`, `GET /metadata`. The embedder and the index load once in the lifespan,
+  never per request.
+- Invalid input returns a 422 with readable per-field errors; unexpected errors return a clean 500
+  with the correlation id and no traceback.
+- `/metadata` reports the service version, embedding model, embedder class (`OnnxEmbedder` when
+  served), documents indexed (1093 = 1149 articles minus 56 repealed), Groq model and the SHA-256 of
+  the corpus file.
+- Latency in two sample requests: retrieval 16-31 ms, Groq generation 450-600 ms, total about
+  470-640 ms. The LLM call dominates, so the embedder runtime matters little for end-to-end time.
+
+## Step 6 - Tests
+
+- 74 unit tests run by default. 3 integration tests (hit@3 against the notebook, ONNX parity,
+  dynamic batch axis) run with `pytest -m integration`; they take about 6 minutes because they load
+  the real model.
+- Coverage is 75% against a 70% gate. The lowest module is `parse_civil_code.py` at 34%: its PDF
+  paths need the source PDF, while its pure functions are unit-tested.
+- Mocks: a fake embedder, a fake chat client and a fake `groq` module, so tests need no network and
+  no API key.
+- Break check: changed `sources_of` to return `str(h.article_number)`; two tests failed
+  (`test_sources_are_article_citations_not_chunk_ids` in `test_rag.py` and
+  `test_ask_returns_answer_and_article_citations` in `test_api.py`), then restored with
+  `git restore`; all 74 tests green again.
+- Tooling: `ruff format` is used instead of `black`. Pre-commit runs ruff, end-of-file,
+  trailing-whitespace and line-ending hooks.
