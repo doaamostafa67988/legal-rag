@@ -98,3 +98,13 @@ image is built); latency is about the same as eager PyTorch.
   `git restore`; all 74 tests green again.
 - Tooling: `ruff format` is used instead of `black`. Pre-commit runs ruff, end-of-file,
   trailing-whitespace and line-ending hooks.
+
+## Dependency split
+
+- Base dependencies are what the API needs to serve; `torch`, `sentence-transformers` and `pymupdf`
+  moved to the `offline` dependency group (dev installs them, the image does not).
+- `.venv` size: 1.7 GB with everything, 424 MB with `uv sync --no-dev`.
+- Check: with `--no-dev` the service starts, `/health` returns 200 and `/ask` answers, so serving
+  does not need PyTorch.
+- `LEGAL_RAG_ROOT` sets where `data/`, `chroma_db/` and `models/` live; the default is the
+  checkout, so an installed package (Docker) no longer resolves paths inside `site-packages`.
