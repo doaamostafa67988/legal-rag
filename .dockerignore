@@ -1,0 +1,19 @@
+# secrets: the API key must never end up in an image layer
+.env
+.env.*
+
+# not needed to run the service
+.git
+.venv
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+.pre-commit-config.yaml
+notebooks/
+*.ipynb
+tests/
+reports/
+data/raw/
+*Zone.Identifier

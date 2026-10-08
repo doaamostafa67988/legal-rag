@@ -1,0 +1,12 @@
+# Deliberately naive single-stage build, kept ONLY to measure the size gap for the report:
+#   docker build -f docker/Dockerfile.single -t legal-rag:single .
+# uv, its cache and the build context all stay in the final image.
+FROM python:3.12-slim
+RUN pip install uv
+RUN useradd --create-home --uid 1000 appuser
+WORKDIR /app
+COPY . .
+RUN uv sync --frozen --no-dev
+ENV PATH="/app/.venv/bin:$PATH" LEGAL_RAG_ROOT=/app
+EXPOSE 8000
+CMD ["uvicorn", "legal_rag.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
