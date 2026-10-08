@@ -3,16 +3,16 @@ name = "legal-rag"
 version = "0.1.0"
 description = "Bilingual Egyptian Civil Code RAG: parent-child retrieval, reranking and GraphRAG"
 requires-python = ">=3.11"
+# Runtime only: what the API needs to serve. No torch, no PDF parser, no notebooks.
 dependencies = [
     "chromadb>=1.5.9",
     "fastapi>=0.142.2",
     "groq>=1.7.0",
+    "numpy>=1.26",
     "onnxruntime>=1.30.0",
     "pydantic-settings>=2.15.0",
-    "pymupdf>=1.24",
     "python-dotenv>=1.2.4",
-    "sentence-transformers>=6.1.0",
-    "torch>=2.14.1",
+    "transformers>=4.40",  # AutoTokenizer only (numpy tensors), torch is not needed
     "uvicorn[standard]>=0.54.0",
 ]
 
@@ -25,6 +25,14 @@ dev = [
     "ipykernel>=7.4.0",
     "httpx>=0.28.1",
     "pytest-cov>=7.1.0",
+    { include-group = "offline" },
+    { include-group = "export" },
+]
+# Build-time tools, never shipped: parse the PDF, build the index with PyTorch, benchmark.
+offline = [
+    "pymupdf>=1.24",
+    "sentence-transformers>=6.1.0",
+    "torch>=2.14.1",
 ]
 export = [
     "onnx>=1.23.2",

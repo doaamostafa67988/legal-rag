@@ -1838,13 +1838,12 @@ dependencies = [
     { name = "chromadb" },
     { name = "fastapi" },
     { name = "groq" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "onnxruntime" },
     { name = "pydantic-settings" },
-    { name = "pymupdf" },
     { name = "python-dotenv" },
-    { name = "sentence-transformers" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
+    { name = "transformers" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -1853,14 +1852,26 @@ dev = [
     { name = "httpx" },
     { name = "ipykernel" },
     { name = "jupyter" },
+    { name = "onnx" },
+    { name = "onnxscript" },
     { name = "pre-commit" },
+    { name = "pymupdf" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
+    { name = "sentence-transformers" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
 ]
 export = [
     { name = "onnx" },
     { name = "onnxscript" },
+]
+offline = [
+    { name = "pymupdf" },
+    { name = "sentence-transformers" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
 ]
 
 [package.metadata]
@@ -1868,12 +1879,11 @@ requires-dist = [
     { name = "chromadb", specifier = ">=1.5.9" },
     { name = "fastapi", specifier = ">=0.142.2" },
     { name = "groq", specifier = ">=1.7.0" },
+    { name = "numpy", specifier = ">=1.26" },
     { name = "onnxruntime", specifier = ">=1.30.0" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
-    { name = "pymupdf", specifier = ">=1.24" },
     { name = "python-dotenv", specifier = ">=1.2.4" },
-    { name = "sentence-transformers", specifier = ">=6.1.0" },
-    { name = "torch", specifier = ">=2.14.1", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "transformers", specifier = ">=4.40" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54.0" },
 ]
 
@@ -1882,14 +1892,24 @@ dev = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "ipykernel", specifier = ">=7.4.0" },
     { name = "jupyter", specifier = ">=1.1.1" },
+    { name = "onnx", specifier = ">=1.23.2" },
+    { name = "onnxscript", specifier = ">=0.7.2" },
     { name = "pre-commit", specifier = ">=3.7" },
+    { name = "pymupdf", specifier = ">=1.24" },
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "ruff", specifier = ">=0.6" },
+    { name = "sentence-transformers", specifier = ">=6.1.0" },
+    { name = "torch", specifier = ">=2.14.1", index = "https://download.pytorch.org/whl/cpu" },
 ]
 export = [
     { name = "onnx", specifier = ">=1.23.2" },
     { name = "onnxscript", specifier = ">=0.7.2" },
+]
+offline = [
+    { name = "pymupdf", specifier = ">=1.24" },
+    { name = "sentence-transformers", specifier = ">=6.1.0" },
+    { name = "torch", specifier = ">=2.14.1", index = "https://download.pytorch.org/whl/cpu" },
 ]
 
 [[package]]

@@ -1,10 +1,13 @@
+import os
 from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ROOT = Path(__file__).resolve().parents[2]
+# Where data/, chroma_db/ and models/ live. From a checkout that is the repo root; once the package
+# is installed (Docker) __file__ sits inside site-packages, so deployments set LEGAL_RAG_ROOT.
+ROOT = Path(os.environ.get("LEGAL_RAG_ROOT") or Path(__file__).resolve().parents[2])
 
 
 class Settings(BaseSettings):
