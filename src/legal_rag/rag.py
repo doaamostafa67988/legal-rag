@@ -18,6 +18,7 @@ from chromadb.errors import NotFoundError
 from legal_rag.config import settings
 from legal_rag.data import Article, load_corpus
 from legal_rag.logging_conf import configure_logging, correlation_context
+from legal_rag.timing import timed
 
 log = logging.getLogger(__name__)
 
@@ -134,6 +135,7 @@ class LegalRAG:
     def documents_indexed(self) -> int:
         return self._collection.count()  # used by /health
 
+    @timed
     def retrieve(self, question: str, k: int = 3) -> list[Hit]:
         if not question.strip():
             log.warning("rejected empty question")  # client mistake, not a server fault
