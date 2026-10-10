@@ -77,7 +77,7 @@ def client(rag, chat):
 def test_health_reports_the_index_size(client):
     r = client.get("/health")
     assert r.status_code == 200
-    assert r.json() == {"status": "ok", "documents_indexed": 3, "embedder": "FakeEmbedder"}
+    assert r.json() == {"status": "healthy", "documents_indexed": 3, "embedder": "FakeEmbedder"}
 
 
 def test_health_is_503_when_the_model_is_not_loaded(rag, chat):

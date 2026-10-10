@@ -134,7 +134,7 @@ def create_app(rag: LegalRAG | None = None, chat: ChatClient | None = None) -> F
         if rag_ready is None:
             return JSONResponse({"detail": "model not loaded"}, status_code=503)
         return HealthResponse(
-            status="ok",
+            status="healthy",
             documents_indexed=rag_ready.documents_indexed,
             embedder=type(rag_ready.embedder).__name__,
         )
