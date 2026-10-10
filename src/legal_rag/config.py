@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     embedder_backend: Literal["onnx", "torch"] = "onnx"  # what the API serves with
     groq_model: str = "qwen/qwen3.8-27b"
     groq_api_key: SecretStr | None = Field(default=None, validation_alias="GROQ_API_KEY")
+    mlflow_tracking_uri: str = Field(
+        default="http://localhost:5000", validation_alias="MLFLOW_TRACKING_URI"
+    )
     low_score_threshold: float = 0.75  # provisional: calibrate with off-topic queries
     host: str = "0.0.0.0"
     port: int = 8000

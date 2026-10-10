@@ -27,6 +27,7 @@ dev = [
     "pytest-cov>=7.1.0",
     { include-group = "offline" },
     { include-group = "export" },
+    { include-group = "tracking" },
 ]
 # Build-time tools, never shipped: parse the PDF, build the index with PyTorch, benchmark.
 offline = [
@@ -37,6 +38,9 @@ offline = [
 export = [
     "onnx>=1.23.2",
     "onnxscript>=0.7.2",
+]
+tracking = [
+    "mlflow>=3.17.0",
 ]
 
 [build-system]

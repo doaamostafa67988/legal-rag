@@ -1,0 +1,68 @@
+# Local experiment-tracking stack: Postgres (run metadata) + RustFS, an S3-compatible object
+# store (artifacts) + MLflow server. Kept apart from docker-compose.yml so `docker compose up`
+# for the API never needs it.
+#
+#   docker compose -f docker/docker-compose.tracking.yml --env-file .env up -d --build
+#   MLflow UI: http://localhost:5000      object-store console: http://localhost:9001
+#
+# The default credentials below are for local use only; override them in .env and never expose
+# these ports to a network.
+name: legal-rag-tracking
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mlflow
+      POSTGRES_PASSWORD: ${MLFLOW_DB_PASSWORD:-mlflow}
+      POSTGRES_DB: mlflow
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mlflow -d mlflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  s3:
+    image: rustfs/rustfs:latest # pin to the digest shown by `docker images --digests` once it works
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:-rustfsadmin}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_CONSOLE_ENABLE: "true"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - s3data:/data
+
+  mlflow:
+    build:
+      context: mlflow
+      args:
+        MLFLOW_VERSION: ${MLFLOW_VERSION:-3.17.0}
+    image: legal-rag-mlflow:local
+    depends_on:
+      postgres:
+        condition: service_healthy
+      s3:
+        condition: service_started
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://s3:9000
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-rustfsadmin}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-rustfsadmin}
+    # ensure_bucket.py creates the bucket (retrying until the store is up), then the server starts
+    command: >
+      sh -c "python /ensure_bucket.py &&
+      exec mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri postgresql+psycopg2://mlflow:${MLFLOW_DB_PASSWORD:-mlflow}@postgres:5432/mlflow
+      --artifacts-destination s3://mlflow-artifacts
+      --serve-artifacts"
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  s3data:
