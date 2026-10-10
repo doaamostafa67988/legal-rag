@@ -142,3 +142,14 @@ Acceptance check: after `docker logout` and removing the local tags, `docker pul
 downloaded the image anonymously (digest `sha256:184c55b5be12...` matches the push). The image holds
 no API key and no `.env`; the pulled container answered `/health` and `/ask`, runs as `appuser` and
 reports `healthy`.
+
+## Maturity self-assessment
+
+Level: on a five-level scale from fully manual (0) to automated with monitoring (4), this repo is
+at level 1: the code is packaged, tested and containerised, but not yet tracked or automated.
+
+Missing for the next level: nothing is tracked or versioned yet. Evaluation (hit@3 on 10 questions)
+is a manual test rather than a recorded run, and the corpus, Chroma index and ONNX encoder are not
+versioned. There is also no CI, so tests, lint and the image build run only on my machine and
+nothing stops a broken commit from reaching `main`; Module 2 adds MLflow tracking, a DVC pipeline
+and CI with a quality gate.
