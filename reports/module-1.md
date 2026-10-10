@@ -108,3 +108,32 @@ image is built); latency is about the same as eager PyTorch.
   does not need PyTorch.
 - `LEGAL_RAG_ROOT` sets where `data/`, `chroma_db/` and `models/` live; the default is the
   checkout, so an installed package (Docker) no longer resolves paths inside `site-packages`.
+Docker Hub lists the repository at 466.1 MB, the same layers as the 489 MB content size above
+(MiB versus MB).
+
+## Step 7 - Docker
+
+- `docker/Dockerfile` is multi-stage: the builder installs the locked dependencies with uv
+  (`--frozen --no-dev`); the runtime stage (python:3.12-slim) copies only the venv, the corpus, the
+  ONNX encoder and the Chroma index.
+- The container runs as non-root (`appuser`), has a HEALTHCHECK on `/health`, and does not contain
+  the API key: `GROQ_API_KEY` is passed at run time. `.dockerignore` keeps `.env` out of the build
+  context.
+- Published on Docker Hub: `doaamostafa679/legal-rag:0.1.0` and `latest`
+  (digest `sha256:184c55b5be12...`).
+- Run: `docker run -p 8000:8000 -e GROQ_API_KEY=<your key> doaamostafa679/legal-rag:0.1.0`
+
+| Image | Content size (compressed layers) |
+|---|---|
+| multi-stage (`docker/Dockerfile`) | 489 MB |
+| single-stage (`docker/Dockerfile.single`) | 492 MB |
+
+The two are within 3 MB: uv needs no compiler, so the builder stage has little to throw away. The
+real saving came from the dependency split, where PyTorch left the runtime dependencies
+(`.venv` 1.7 GB -> 424 MB). Content size is used for the comparison because it is what a pull
+downloads; Docker Hub lists the repository at 466.1 MB (MiB versus MB). The effect of
+`.dockerignore` on size was not measured.
+
+Checks on the running container: `/health` returns `healthy` with 1093 documents, `/metadata`
+reports the same corpus SHA-256 as the local run, `/ask` answers with Article 44, `whoami` prints
+`appuser`, and `docker ps` shows `(healthy)`.
