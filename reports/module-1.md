@@ -137,3 +137,8 @@ downloads; Docker Hub lists the repository at 466.1 MB (MiB versus MB). The effe
 Checks on the running container: `/health` returns `healthy` with 1093 documents, `/metadata`
 reports the same corpus SHA-256 as the local run, `/ask` answers with Article 44, `whoami` prints
 `appuser`, and `docker ps` shows `(healthy)`.
+
+Acceptance check: after `docker logout` and removing the local tags, `docker pull` from Docker Hub
+downloaded the image anonymously (digest `sha256:184c55b5be12...` matches the push). The image holds
+no API key and no `.env`; the pulled container answered `/health` and `/ask`, runs as `appuser` and
+reports `healthy`.
