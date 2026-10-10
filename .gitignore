@@ -15,3 +15,19 @@ wheels/
 
 # Source PDFs (large / copyrighted) - keep out of git
 data/raw/*.pdf
+*:Zone.Identifier
+
+.env
+.env-*
+
+# Vector store is rebuilt by legal_rag.rag ingest
+chroma_db/
+
+# Windows download markers
+*:Zone.Identifier
+
+# Exported model artifacts (large; tracked with DVC in Module 2)
+models/
+
+.coverage
+htmlcov/

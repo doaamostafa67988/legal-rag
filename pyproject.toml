@@ -3,8 +3,17 @@ name = "legal-rag"
 version = "0.1.0"
 description = "Bilingual Egyptian Civil Code RAG: parent-child retrieval, reranking and GraphRAG"
 requires-python = ">=3.11"
+# Runtime only: what the API needs to serve. No torch, no PDF parser, no notebooks.
 dependencies = [
-    "pymupdf>=1.24",
+    "chromadb>=1.5.9",
+    "fastapi>=0.142.2",
+    "groq>=1.7.0",
+    "numpy>=1.26",
+    "onnxruntime>=1.30.0",
+    "pydantic-settings>=2.15.0",
+    "python-dotenv>=1.2.4",
+    "transformers>=4.40",  # AutoTokenizer only (numpy tensors), torch is not needed
+    "uvicorn[standard]>=0.54.0",
 ]
 
 [dependency-groups]
@@ -12,6 +21,22 @@ dev = [
     "pytest>=8",
     "ruff>=0.6",
     "pre-commit>=3.7",
+    "jupyter>=1.1.1",
+    "ipykernel>=7.4.0",
+    "httpx>=0.28.1",
+    "pytest-cov>=7.1.0",
+    { include-group = "offline" },
+    { include-group = "export" },
+]
+# Build-time tools, never shipped: parse the PDF, build the index with PyTorch, benchmark.
+offline = [
+    "pymupdf>=1.24",
+    "sentence-transformers>=6.1.0",
+    "torch>=2.14.1",
+]
+export = [
+    "onnx>=1.23.2",
+    "onnxscript>=0.7.2",
 ]
 
 [build-system]
@@ -30,3 +55,17 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m 'not integration' --cov=src/legal_rag --cov-report=term-missing --cov-fail-under=70"
+markers = ["integration: needs the real e5 model (downloads ~0.5 GB); run with -m integration"]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[tool.coverage.run]
+# one-off scripts that need the real model; exercised by `pytest -m integration --no-cov`
+omit = ["*/legal_rag/benchmark.py", "*/legal_rag/export.py"]

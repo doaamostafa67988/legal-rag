@@ -1,0 +1,18 @@
+# From the repo root:
+#   docker compose --env-file .env -f docker/docker-compose.yml up --build
+# --env-file makes Compose read GROQ_API_KEY from the .env you already use locally.
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: legal-rag:0.1.0
+    ports:
+      - "8000:8000"
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY:?set GROQ_API_KEY (see --env-file in the comment above)}
+      LEGAL_RAG_LOG_LEVEL: INFO
+    volumes:
+      # swap the encoder without rebuilding; the image already has a copy baked in
+      - ../models/e5-small-onnx:/app/models/e5-small-onnx:ro
+    restart: unless-stopped
