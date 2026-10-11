@@ -4,6 +4,11 @@
     uv run python -m legal_rag.experiments --dry-run            # same numbers, nothing logged
     uv run python -m legal_rag.experiments --models intfloat/multilingual-e5-base
 
+Hold-out check (run once, after the config is chosen on the dev questions):
+
+    uv run python -m legal_rag.experiments --questions data/eval/holdout.json \
+        --only "ar" "ar and en vectors, max" --split holdout --experiment legal-rag-holdout
+
 Embedding the corpus is the slow part (about 4 minutes per pass with e5-small on a CPU), so every
 (model, text variant) pass is cached in data/cache/. Every ranking experiment on top of the cached
 vectors (fusion, weights) is then instant.
@@ -230,8 +235,12 @@ def run_model(
     questions: list,
     cache_dir: Path,
     context: dict[str, str | int],
+    only: list[str] | None = None,
 ) -> None:
-    """Evaluate every config for one embedding model; `mlflow=None` prints without logging."""
+    """Evaluate the configs for one embedding model; `mlflow=None` prints without logging.
+
+    `only` keeps just the configs with those names (used for the one-shot hold-out run).
+    """
     matrices: dict[str, np.ndarray] = {}
 
     def matrix(variant: str) -> np.ndarray:
@@ -246,7 +255,7 @@ def run_model(
         return evaluate(retriever, questions)
 
     short = model.split("/")[-1].removeprefix("multilingual-")
-    configs = sweep_configs()
+    configs = [c for c in sweep_configs() if only is None or c.name in only]
     for config in (c for c in configs if not c.group):
         record(mlflow, f"{short} / {config.name}", config, model, score(config), context)
     for group in dict.fromkeys(c.group for c in configs if c.group):
@@ -294,9 +303,21 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--questions", type=Path, default=DEFAULT_QUESTIONS)
     ap.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE)
     ap.add_argument("--experiment", default=EXPERIMENT)
+    ap.add_argument(
+        "--only",
+        nargs="+",
+        metavar="NAME",
+        help="run only the configs with these names (use it for the hold-out run)",
+    )
+    ap.add_argument("--split", default="dev", help="label logged as a param: dev or holdout")
     ap.add_argument("--dry-run", action="store_true", help="evaluate and print, log nothing")
     args = ap.parse_args(argv)
     logging.getLogger("legal_rag").setLevel(logging.ERROR)
+
+    known = [c.name for c in sweep_configs()]
+    unknown = [name for name in args.only or [] if name not in known]
+    if unknown:
+        ap.error(f"unknown config(s) {unknown}; choose from {known}")
 
     mlflow = None
     if not args.dry_run:
@@ -313,11 +334,18 @@ def main(argv: list[str] | None = None) -> None:
         "eval_set_sha256": file_sha256(args.questions),
         "n_docs": len(active_articles(articles)),
         "n_questions": len(questions),
+        "split": args.split,
         "git_commit": git_commit(),
+        # one chunk per article, so there is no window size or overlap to tune
+        "chunk_strategy": "article",
+        "chunk_size": "article",
+        "overlap": 0,
     }
     for model in args.models:
         embedder = MemoEmbedder(E5Embedder(model))
-        run_model(mlflow, model, embedder, articles, questions, args.cache_dir, context)
+        run_model(
+            mlflow, model, embedder, articles, questions, args.cache_dir, context, only=args.only
+        )
 
 
 if __name__ == "__main__":
