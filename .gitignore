@@ -31,3 +31,4 @@ models/
 
 .coverage
 htmlcov/
+data/cache/
