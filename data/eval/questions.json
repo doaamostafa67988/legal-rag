@@ -1,0 +1,242 @@
+[
+  {
+    "id": "q01-ar",
+    "lang": "ar",
+    "question": "ماذا يطبق القاضي إذا لم يوجد نص تشريعي؟",
+    "gold_articles": [
+      1
+    ]
+  },
+  {
+    "id": "q01-en",
+    "lang": "en",
+    "question": "What does the judge apply if there is no applicable legislative provision?",
+    "gold_articles": [
+      1
+    ]
+  },
+  {
+    "id": "q02-ar",
+    "lang": "ar",
+    "question": "هل يجوز لأحد المتعاقدين تعديل العقد بإرادته المنفردة؟",
+    "gold_articles": [
+      147
+    ]
+  },
+  {
+    "id": "q02-en",
+    "lang": "en",
+    "question": "Can one party unilaterally modify a contract?",
+    "gold_articles": [
+      147
+    ]
+  },
+  {
+    "id": "q03-ar",
+    "lang": "ar",
+    "question": "هل يجب تنفيذ العقد بحسن نية؟",
+    "gold_articles": [
+      148
+    ]
+  },
+  {
+    "id": "q03-en",
+    "lang": "en",
+    "question": "Must a contract be performed in good faith?",
+    "gold_articles": [
+      148
+    ]
+  },
+  {
+    "id": "q04-ar",
+    "lang": "ar",
+    "question": "ما التزام من يتسبب بخطئه في ضرر للغير؟",
+    "gold_articles": [
+      163
+    ]
+  },
+  {
+    "id": "q04-en",
+    "lang": "en",
+    "question": "What is the obligation of a person whose fault causes harm to another?",
+    "gold_articles": [
+      163
+    ]
+  },
+  {
+    "id": "q05-ar",
+    "lang": "ar",
+    "question": "ما هو سن الرشد؟",
+    "gold_articles": [
+      44
+    ]
+  },
+  {
+    "id": "q05-en",
+    "lang": "en",
+    "question": "What is the age of majority?",
+    "gold_articles": [
+      44
+    ]
+  },
+  {
+    "id": "q06-ar",
+    "lang": "ar",
+    "question": "متى ينعقد العقد؟",
+    "gold_articles": [
+      89
+    ]
+  },
+  {
+    "id": "q06-en",
+    "lang": "en",
+    "question": "When is a contract formed?",
+    "gold_articles": [
+      89
+    ]
+  },
+  {
+    "id": "q07-ar",
+    "lang": "ar",
+    "question": "متى يجوز إبطال العقد بسبب التدليس؟",
+    "gold_articles": [
+      125
+    ]
+  },
+  {
+    "id": "q07-en",
+    "lang": "en",
+    "question": "When can a contract be annulled for fraudulent misrepresentation?",
+    "gold_articles": [
+      125
+    ]
+  },
+  {
+    "id": "q08-ar",
+    "lang": "ar",
+    "question": "هل يمكن تصحيح العقد الباطل بالإجازة؟",
+    "gold_articles": [
+      141
+    ]
+  },
+  {
+    "id": "q08-en",
+    "lang": "en",
+    "question": "Can a void contract be validated by ratification?",
+    "gold_articles": [
+      141
+    ]
+  },
+  {
+    "id": "q09-ar",
+    "lang": "ar",
+    "question": "ماذا يحق لأحد المتعاقدين إذا لم يوف الطرف الآخر بالتزامه في العقد الملزم للجانبين؟",
+    "gold_articles": [
+      157
+    ]
+  },
+  {
+    "id": "q09-en",
+    "lang": "en",
+    "question": "What can a party do if the other party fails to perform a bilateral contract?",
+    "gold_articles": [
+      157
+    ]
+  },
+  {
+    "id": "q10-ar",
+    "lang": "ar",
+    "question": "ما مسؤولية عدة أشخاص عن ضرر واحد؟",
+    "gold_articles": [
+      169
+    ]
+  },
+  {
+    "id": "q10-en",
+    "lang": "en",
+    "question": "What is the liability when several persons are responsible for the same injury?",
+    "gold_articles": [
+      169
+    ]
+  },
+  {
+    "id": "q11-ar",
+    "lang": "ar",
+    "question": "ما مدة تقادم دعوى التعويض عن العمل غير المشروع؟",
+    "gold_articles": [
+      172
+    ]
+  },
+  {
+    "id": "q11-en",
+    "lang": "en",
+    "question": "What is the limitation period for an action for damages from an unlawful act?",
+    "gold_articles": [
+      172
+    ]
+  },
+  {
+    "id": "q12-ar",
+    "lang": "ar",
+    "question": "ما سعر الفائدة القانونية عند التأخر في دفع مبلغ من المال؟",
+    "gold_articles": [
+      226
+    ]
+  },
+  {
+    "id": "q12-en",
+    "lang": "en",
+    "question": "What interest is due when a payment of money is delayed?",
+    "gold_articles": [
+      226
+    ]
+  },
+  {
+    "id": "q13-ar",
+    "lang": "ar",
+    "question": "ما هو عقد البيع؟",
+    "gold_articles": [
+      418
+    ]
+  },
+  {
+    "id": "q13-en",
+    "lang": "en",
+    "question": "What is a contract of sale?",
+    "gold_articles": [
+      418
+    ]
+  },
+  {
+    "id": "q14-ar",
+    "lang": "ar",
+    "question": "ما هو عقد الإيجار؟",
+    "gold_articles": [
+      558
+    ]
+  },
+  {
+    "id": "q14-en",
+    "lang": "en",
+    "question": "What is a lease contract?",
+    "gold_articles": [
+      558
+    ]
+  },
+  {
+    "id": "q15-ar",
+    "lang": "ar",
+    "question": "هل يجوز نزع ملكية شخص دون تعويض عادل؟",
+    "gold_articles": [
+      805
+    ]
+  },
+  {
+    "id": "q15-en",
+    "lang": "en",
+    "question": "Can a person be deprived of his property without fair compensation?",
+    "gold_articles": [
+      805
+    ]
+  }
+]
