@@ -76,3 +76,7 @@ torch = { index = "pytorch-cpu" }
 [tool.coverage.run]
 # one-off scripts that need the real model; exercised by `pytest -m integration --no-cov`
 omit = ["*/legal_rag/benchmark.py", "*/legal_rag/export.py"]
+
+[tool.ruff.lint.per-file-ignores]
+# verbatim model answers: wrapping them would change the test data
+"tests/test_strip_real_answers.py" = ["E501"]
