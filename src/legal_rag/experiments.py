@@ -20,7 +20,7 @@ import hashlib
 import logging
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -181,6 +181,23 @@ def sweep_configs() -> list[Config]:
     return configs
 
 
+@dataclass(frozen=True)
+class RunContext:
+    """What every run records besides its own results: the data, the code and the environment."""
+
+    params: dict[str, str | int] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
+    texts: dict[str, str] = field(default_factory=dict)  # artifact name -> text (requirements.txt)
+
+
+def index_cost(matrices: list[np.ndarray]) -> dict[str, float]:
+    """Size of the index a config needs: the price paid for its accuracy."""
+    return {
+        "n_vectors": float(sum(m.shape[0] for m in matrices)),
+        "index_mb": sum(m.nbytes for m in matrices) / 1e6,
+    }
+
+
 def metric_name(name: str) -> str:
     """MLflow metric names cannot contain '@'."""
     return name.replace("@", "_at_")
@@ -199,7 +216,8 @@ def record(
     config: Config,
     model: str,
     result: dict,
-    context: dict[str, str | int],
+    ctx: RunContext,
+    cost: dict[str, float] | None = None,
     nested: bool = False,
 ) -> None:
     overall = result["overall"]
@@ -213,12 +231,14 @@ def record(
                 "variants": ",".join(config.variants),
                 "fusion": config.fusion,
                 "weights": ",".join(str(w) for w in config.weights),
-                **context,
+                **ctx.params,
             }
         )
-        mlflow.set_tag("family", config.family)
-        mlflow.log_metrics(flat_metrics(result))
+        mlflow.set_tags({"family": config.family, **ctx.tags})
+        mlflow.log_metrics({**flat_metrics(result), **(cost or {})})
         mlflow.log_dict(result["misses"], "misses.json")
+        for name, text in ctx.texts.items():
+            mlflow.log_text(text, name)
 
 
 def _run(mlflow, run_name: str):
@@ -234,7 +254,7 @@ def run_model(
     articles: list[Article],
     questions: list,
     cache_dir: Path,
-    context: dict[str, str | int],
+    ctx: RunContext,
     only: list[str] | None = None,
 ) -> None:
     """Evaluate the configs for one embedding model; `mlflow=None` prints without logging.
@@ -248,22 +268,22 @@ def run_model(
             matrices[variant] = embedded_corpus(embedder, model, articles, variant, cache_dir)
         return matrices[variant]
 
-    def score(config: Config) -> dict:
-        retriever = MatrixRetriever(
-            embedder, articles, [matrix(v) for v in config.variants], config.fusion, config.weights
-        )
-        return evaluate(retriever, questions)
+    def score(config: Config) -> tuple[dict, dict[str, float]]:
+        used = [matrix(v) for v in config.variants]
+        retriever = MatrixRetriever(embedder, articles, used, config.fusion, config.weights)
+        return evaluate(retriever, questions), index_cost(used)
 
     short = model.split("/")[-1].removeprefix("multilingual-")
     configs = [c for c in sweep_configs() if only is None or c.name in only]
     for config in (c for c in configs if not c.group):
-        record(mlflow, f"{short} / {config.name}", config, model, score(config), context)
+        result, cost = score(config)
+        record(mlflow, f"{short} / {config.name}", config, model, result, ctx, cost)
     for group in dict.fromkeys(c.group for c in configs if c.group):
         best: tuple[tuple[float, float], Config] | None = None
         with _run(mlflow, f"{short} / {group}"):
             for config in (c for c in configs if c.group == group):
-                result = score(config)
-                record(mlflow, f"{short} / {config.name}", config, model, result, context, True)
+                result, cost = score(config)
+                record(mlflow, f"{short} / {config.name}", config, model, result, ctx, cost, True)
                 key = (result["overall"]["hit@3"], result["overall"]["mrr"])
                 if best is None or key > best[0]:
                     best = (key, config)
@@ -292,6 +312,31 @@ def git_commit() -> str:
     return out.stdout.strip()
 
 
+def git_author() -> str:
+    try:
+        out = subprocess.run(
+            ["git", "config", "user.name"], cwd=ROOT, capture_output=True, text=True, check=True
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return out.stdout.strip() or "unknown"
+
+
+def requirements_text() -> str:
+    """The exact locked environment the experiment ran in, kept as an artifact of every run."""
+    try:
+        out = subprocess.run(
+            ["uv", "export", "--frozen", "--no-hashes", "--no-emit-project"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return "unavailable: `uv export` failed"
+    return out.stdout
+
+
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(prog="python -m legal_rag.experiments")
     ap.add_argument(
@@ -303,6 +348,7 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--questions", type=Path, default=DEFAULT_QUESTIONS)
     ap.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE)
     ap.add_argument("--experiment", default=EXPERIMENT)
+    ap.add_argument("--dry-run", action="store_true", help="evaluate and print, log nothing")
     ap.add_argument(
         "--only",
         nargs="+",
@@ -310,10 +356,8 @@ def main(argv: list[str] | None = None) -> None:
         help="run only the configs with these names (use it for the hold-out run)",
     )
     ap.add_argument("--split", default="dev", help="label logged as a param: dev or holdout")
-    ap.add_argument("--dry-run", action="store_true", help="evaluate and print, log nothing")
     args = ap.parse_args(argv)
     logging.getLogger("legal_rag").setLevel(logging.ERROR)
-
     known = [c.name for c in sweep_configs()]
     unknown = [name for name in args.only or [] if name not in known]
     if unknown:
@@ -329,23 +373,30 @@ def main(argv: list[str] | None = None) -> None:
 
     articles = load_corpus()
     questions = load_questions(args.questions)
-    context: dict[str, str | int] = {
-        "corpus_sha256": file_sha256(settings.corpus_json),
-        "eval_set_sha256": file_sha256(args.questions),
-        "n_docs": len(active_articles(articles)),
-        "n_questions": len(questions),
-        "split": args.split,
-        "git_commit": git_commit(),
-        # one chunk per article, so there is no window size or overlap to tune
-        "chunk_strategy": "article",
-        "chunk_size": "article",
-        "overlap": 0,
-    }
+    corpus_hash = file_sha256(settings.corpus_json)
+    ctx = RunContext(
+        params={
+            "corpus_sha256": corpus_hash,
+            "eval_set_sha256": file_sha256(args.questions),
+            "n_docs": len(active_articles(articles)),
+            "n_questions": len(questions),
+            "split": args.split,
+            # one chunk per article, so there is no window size or overlap to tune
+            "chunk_strategy": "article",
+            "chunk_size": "article",
+            "overlap": 0,
+        },
+        tags={
+            "git_commit": git_commit(),
+            "data_version": corpus_hash[:12],
+            "author": git_author(),
+            "framework": "sentence-transformers + numpy",
+        },
+        texts={"requirements.txt": requirements_text()},
+    )
     for model in args.models:
         embedder = MemoEmbedder(E5Embedder(model))
-        run_model(
-            mlflow, model, embedder, articles, questions, args.cache_dir, context, only=args.only
-        )
+        run_model(mlflow, model, embedder, articles, questions, args.cache_dir, ctx, args.only)
 
 
 if __name__ == "__main__":

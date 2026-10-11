@@ -10,9 +10,11 @@ from legal_rag.experiments import (
     ALPHAS,
     MatrixRetriever,
     MemoEmbedder,
+    RunContext,
     active_articles,
     embedded_corpus,
     flat_metrics,
+    index_cost,
     record,
     run_model,
     sweep_configs,
@@ -211,7 +213,14 @@ class FakeMlflow:
 
     @contextmanager
     def start_run(self, run_name: str, nested: bool = False):
-        run = {"name": run_name, "nested": nested, "params": {}, "metrics": {}, "tags": {}}
+        run = {
+            "name": run_name,
+            "nested": nested,
+            "params": {},
+            "metrics": {},
+            "tags": {},
+            "artifacts": [],
+        }
         self.runs.append(run)
         self._stack.append(run)
         try:
@@ -225,11 +234,14 @@ class FakeMlflow:
     def log_metrics(self, metrics: dict) -> None:
         self._stack[-1]["metrics"].update(metrics)
 
-    def set_tag(self, key: str, value: str) -> None:
-        self._stack[-1]["tags"][key] = value
+    def set_tags(self, tags: dict) -> None:
+        self._stack[-1]["tags"].update(tags)
 
     def log_dict(self, data, name: str) -> None:
-        self._stack[-1]["metrics"].setdefault("_artifacts", []).append(name)
+        self._stack[-1]["artifacts"].append(name)
+
+    def log_text(self, text: str, name: str) -> None:
+        self._stack[-1]["artifacts"].append(name)
 
 
 def corpus() -> list[Article]:
@@ -250,19 +262,28 @@ def test_a_run_logs_params_tags_metrics_and_the_misses(capsys):
         "by_lang": {"ar": {"hit@3": 1.0}},
         "misses": [],
     }
-    record(mlflow, "run", config, "org/model", result, {"n_docs": 3})
+    ctx = RunContext(
+        params={"n_docs": 3},
+        tags={"git_commit": "abc123", "data_version": "d1", "author": "me", "framework": "f"},
+        texts={"requirements.txt": "numpy==2.0"},
+    )
+    record(mlflow, "run", config, "org/model", result, ctx, {"n_vectors": 3.0, "index_mb": 0.1})
     run = mlflow.runs[0]
     assert run["params"]["embedding_model"] == "org/model"
     assert run["params"]["n_docs"] == 3
     assert run["tags"]["family"] == "single-vector"
+    assert run["tags"]["git_commit"] == "abc123"
+    assert {"data_version", "author", "framework"} <= set(run["tags"])
     assert run["metrics"]["hit_at_3"] == 0.5
+    assert run["metrics"]["n_vectors"] == 3.0
+    assert run["artifacts"] == ["misses.json", "requirements.txt"]
     assert "hit@3=0.500" in capsys.readouterr().out
 
 
 def test_a_dry_run_prints_but_logs_nothing(capsys):
     config = sweep_configs()[0]
     result = {"overall": {"hit@3": 0.5, "mrr": 0.4}, "by_lang": {}, "misses": []}
-    record(None, "run", config, "org/model", result, {})
+    record(None, "run", config, "org/model", result, RunContext())
     assert "hit@3=0.500" in capsys.readouterr().out
 
 
@@ -275,7 +296,7 @@ def test_run_model_logs_every_config_and_a_parent_for_the_sweep(tmp_path):
         corpus(),
         QUESTIONS,
         tmp_path,
-        {"n_docs": 8},
+        RunContext(params={"n_docs": 8}),
     )
     nested = [r for r in mlflow.runs if r["nested"]]
     parents = [r for r in mlflow.runs if "weighted sweep" in r["name"]]
@@ -287,6 +308,31 @@ def test_run_model_logs_every_config_and_a_parent_for_the_sweep(tmp_path):
     assert len(list(tmp_path.glob("*.npy"))) == 3  # one embedding pass per variant
 
 
+def test_runs_report_how_big_an_index_each_config_needs(tmp_path):
+    mlflow = FakeMlflow()
+    run_model(
+        mlflow,
+        "org/multilingual-e5-small",
+        MemoEmbedder(LengthEmbedder()),
+        corpus(),
+        QUESTIONS,
+        tmp_path,
+        RunContext(),
+    )
+    by_name = {r["name"]: r["metrics"] for r in mlflow.runs}
+    single, double = by_name["e5-small / ar"], by_name["e5-small / ar and en vectors, max"]
+    assert single["n_vectors"] == 8
+    assert double["n_vectors"] == 16
+    assert double["index_mb"] > single["index_mb"]
+
+
+def test_index_cost_counts_every_vector_and_megabyte():
+    one_megabyte = np.zeros((1000, 250), dtype=np.float32)  # 1000 * 250 * 4 bytes
+    cost = index_cost([one_megabyte, one_megabyte])
+    assert cost["n_vectors"] == 2000
+    assert cost["index_mb"] == pytest.approx(2.0)
+
+
 def test_run_model_without_mlflow_still_evaluates(tmp_path, capsys):
     run_model(
         None,
@@ -295,6 +341,6 @@ def test_run_model_without_mlflow_still_evaluates(tmp_path, capsys):
         corpus(),
         QUESTIONS,
         tmp_path,
-        {},
+        RunContext(),
     )
     assert capsys.readouterr().out.count("hit@3=") == len(sweep_configs())
