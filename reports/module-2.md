@@ -1,75 +1,109 @@
-# Module 2 - Tracking and automation
+# Module 2 — Tracking, versioning, automation
 
-## Step 02 - Tracking the experiments
+Branch: `module-2-tracking-automation` · Tag after merge: `v0.2.0`
 
-- MLflow runs in Docker with PostgreSQL as the backend store and RustFS (S3-compatible) as the
-  artifact store, instead of the MinIO named in the handbook. `MLFLOW_TRACKING_URI` comes from `.env`.
-- Sweep on the 30 dev questions (15 Arabic + 15 English): 2 embedding models (e5-small, e5-base) x
-  15 configs (single vector ar / en / ar+en, the best of the Arabic and English vectors, and a weighted
-  mix with alpha 0 to 1). One chunk per article, so `chunk_size=article` and `overlap=0`.
-- Every run records the corpus and eval-set SHA-256, the git commit, `requirements.txt`, the author
-  and the size of the index.
+Status: Steps 1–2 done (this file). Steps 3–7 are listed at the bottom and filled in as they are finished.
 
-### Six finalists, compared in one MLflow experiment (`legal-rag-finalists`)
+## Step 1 — Tracking infrastructure
 
-Finalists were chosen on the dev questions only. `ar_*` columns use the 15 Arabic questions, the
-others use all 30. Faithfulness is RAGAS on the same 15 Arabic questions (judge `openai/gpt-oss-120b`,
-a different family from the generator).
+`docker/docker-compose.tracking.yml` runs three services: PostgreSQL (run metadata), RustFS, an S3-compatible object store (artifacts), and the MLflow 3.17.0 server.
 
-| Run | faithfulness | ar hit@3 | ar MRR | hit@3 | MRR | index MB |
-|---|---|---|---|---|---|---|
-| e5-small / ar | 0.983 | 1.000 | 0.778 | 0.700 | 0.557 | 1.68 |
-| e5-small / ar and en vectors, max | 0.983 | 1.000 | 0.778 | 1.000 | 0.817 | 3.36 |
-| e5-base / ar | 1.000 | 1.000 | 0.878 | 0.733 | 0.642 | 3.36 |
-| e5-base / ar+en | 0.942 | 0.933 | 0.833 | 0.933 | 0.834 | 3.36 |
-| e5-base / alpha=0.5 | 0.962 | 0.933 | 0.789 | 0.967 | 0.861 | 6.72 |
-| e5-base / ar and en vectors, max | 1.000 | 1.000 | 0.878 | 1.000 | 0.922 | 6.72 |
+```bash
+docker compose -f docker/docker-compose.tracking.yml --env-file .env up -d --build
+# MLflow UI: http://localhost:5000      object-store console: http://localhost:9001
+```
 
-What the table says:
+`MLFLOW_TRACKING_URI` is read through `legal_rag.config` (default `http://localhost:5000`). The API compose file stays separate, so `docker compose up` for the API never starts the tracking stack.
 
-- The Arabic questions are saturated (ar hit@3 is 0.93 to 1.00 for every finalist). The English
-  questions separate the configs: a single Arabic vector gets hit@3 0.70 to 0.73 over all 30
-  questions, so only about 0.40 to 0.47 on the 15 English ones (derived: overall x 30 minus Arabic x
-  15), while the two-vector `max` reaches 1.000.
-- On the dev set the best config is e5-base / max (hit@3 1.000, MRR 0.922). Against e5-small / max the
-  hit@3 is tied and the MRR is 0.105 higher.
-- Faithfulness is 0.94 to 1.00 for all six, so it does not choose between them. It measures whether
-  the answer is supported by the retrieved articles, not whether the right articles were retrieved.
-  It works as a quality gate, not as a selection metric. Single scores move by 0.02 to 0.06 with one
-  unsupported claim, so these differences are noise.
-- The index size is small for every config. The real price of e5-base is the model: about 1.1 GB
-  of ONNX weights against 470 MB for e5-small, and a slower query embedding. Neither is measured yet.
+## Step 2 — Experiment tracking
 
-Validity of the faithfulness number:
+### What is tracked
 
-- The first run scored 0.928. After the citation-stripping fix it is 0.983 (15 Arabic questions).
-  The fix was made after seeing which questions scored low, so the dev number is optimistic. It
-  corrects the scoring, it does not show a better system.
-- Negative control (`legal_rag.faithfulness_control`, rule fixed before the run): the same answers
-  scored against the articles of an unrelated question. Mean faithfulness fell from 0.98 to 0.01
-  (14 of 15 scores were 0.00, the highest 0.17; n=15), so the judge notices an answer that is not
-  grounded in its context. Subtle errors, such as one changed number in an otherwise correct answer,
-  were not tested.
+Every run logs:
 
-### Hold-out, first look (e5-small only)
+- **Params:** `embedding_model`, `variants`, `fusion`, `weights`, `chunk_strategy`, `chunk_size`, `overlap`, `corpus_sha256`, `eval_set_sha256`, `n_docs`, `n_questions`, `split`. Finalist runs add `faithfulness_judge`, `faithfulness_lang`, `faithfulness_n`, `faithfulness_gate`.
+- **Metrics:** `hit_at_3`, `mrr` (overall and per language), `n_vectors`, `index_mb`; finalists also `faithfulness`, `faithfulness_below_gate`, `citation_valid_rate`, `judge_tokens_cold`.
+- **Artifacts:** `misses.json` (questions the config failed), `requirements.txt` (the locked environment from `uv export`); finalists also `faithfulness.json`.
+- **Tags:** `git_commit`, `data_version` (first 12 characters of the corpus SHA-256), `author`, `framework`, `family`.
 
-The 20-question hold-out was checked against the dev set before any run: no article and no
-question text in common (one hold-out question was replaced because its article, 125, was also in
-the dev set). It was run once for two configs.
+Because the corpus is chunked by article, one article is one chunk, so `chunk_size = "article"` and `overlap = 0` are logged as constants. What varies between runs is what is embedded for an article (Arabic, English, or both) and how the scores are fused.
 
-| Config | hold-out hit@3 | hold-out MRR |
+### Three experiments, on purpose
+
+| Experiment | Question it answers | Code |
 |---|---|---|
-| e5-small / ar | 0.500 | 0.429 |
+| `legal-rag-retrieval` | Which representation retrieves best? Full sweep: 3 single-vector variants, a max fusion and an 11-step weighted fusion (nested runs), per embedding model | `experiments.py` |
+| `legal-rag-finalists` | Of the best configs, which also gives faithful answers? Retrieval and faithfulness side by side | `finalists.py`, `faithfulness.py` |
+| `legal-rag-holdout` | Does the choice survive questions it was never tuned on? Run once, never used to tune | `experiments.py --split holdout` |
+
+They are separate because they answer different questions, and the hold-out must stay apart from the dev runs. The comparison view for this report is `legal-rag-finalists`, the only experiment where every run has both retrieval metrics and `faithfulness`. All finalist runs share `git_commit = 11ec18a` and one `data_version`, so the comparison is on the same code and the same data. `finalists.py`, which produced these runs, was committed afterwards (`a4b9064`), so that tag points at the code without it.
+
+### Autologging
+
+Autologging is not applicable here: nothing is trained. The embedding models are used as they are, and the retrieval code is plain numpy. Everything above is logged manually, which is also why the metrics and the data hash are explicit.
+
+### Comparison on the dev set (30 questions; faithfulness on 15 Arabic questions)
+
+| Run | hit@3 | MRR | Arabic hit@3 | Faithfulness | Index (MB) |
+|---|---|---|---|---|---|
+| e5-base / ar and en vectors, max | 1.000 | 0.922 | 1.000 | 1.000 | 6.72 |
+| e5-small / ar and en vectors, max | 1.000 | 0.817 | 1.000 | 0.983 | 3.36 |
+| e5-base / alpha=0.5 | 0.967 | 0.861 | 0.933 | 0.962 | 6.72 |
+| e5-base / ar+en | 0.933 | 0.834 | 0.933 | 0.942 | 3.36 |
+| e5-base / ar | 0.733 | 0.642 | 1.000 | 1.000 | 3.36 |
+| e5-small / ar | 0.700 | 0.557 | 1.000 | 0.983 | 1.68 |
+
+![MLflow comparison view, legal-rag-finalists](module-2-finalists.png)
+
+How to read it:
+
+- Mixing Arabic and English vectors (`max`) is what lifts hit@3 from 0.70–0.73 to 1.0 on the dev set.
+- Faithfulness does not separate the configs: it ranges from 0.94 to 1.0 on 15 questions. It measures whether the answer is supported by the retrieved articles, not whether the right articles were retrieved (`e5-base / ar` has faithfulness 1.0 and hit@3 0.73). So hit@3 and MRR choose the config, and faithfulness stays as a gate against unsupported answers.
+- `e5-small / max` reaches the same hit@3 as `e5-base / max` with half the index (3.36 MB against 6.72 MB), at a lower MRR (0.82 against 0.92).
+- One dev question is 0.033 of hit@3, so differences of one question are signal, not proof. The config was also chosen on these same questions, which is why the hold-out exists.
+
+## Hold-out check (20 questions, never used for tuning)
+
+| Run | hit@3 | MRR |
+|---|---|---|
+| e5-base / ar and en vectors, max | 0.650 | 0.608 |
 | e5-small / ar and en vectors, max | 0.600 | 0.524 |
+| e5-small / ar | 0.500 | 0.429 |
 
-The dev score of the second config was 1.000, so the dev set overstated it by 0.40 (it was picked
-as the best of 16 configs on 30 questions). The gain over the baseline is 2 questions out of 20,
-inside the noise.
+- **The ranking holds:** mixing both languages beats Arabic alone (+0.10 hit@3) on unseen questions too.
+- **The level does not:** `e5-small / max` scored 1.0 on dev and 0.6 on the hold-out. The honest expectation for this config on new questions is hit@3 around 0.6, not 1.0.
+- **Base against small is inside the noise:** 13 against 12 questions out of 20. The base model fixed two questions (h10, h14) and broke one (h19). Its index is twice as large and serving it would need an ONNX export of e5-base.
+- **The hold-out was looked at twice:** once for e5-small, then once for e5-base (run at commit `a4b9064`), so it is no longer a completely clean test. Both runs are in the `legal-rag-holdout` experiment.
 
-### Decision rule, written before the second hold-out look
+### Why questions fail (`misses.json` of the hold-out runs)
 
-- Candidate: e5-base / ar and en vectors, max. Incumbent: e5-small / ar and en vectors, max.
-- The candidate is run once on the hold-out. It is adopted only if its hold-out hit@3 is higher than
-  0.600 (at least 13 of 20). A tie or a lower score keeps e5-small, which is cheaper to serve.
-- One question is 0.05 on 20 questions, so this is a decision rule, not a significance test.
-  The hold-out will have been looked at in two sessions; this is stated in the final results.
+Five of the 20 questions fail in all three runs (h07, h08, h12, h15, h18). The failures fall into three patterns:
+
+1. **Near misses, right area, wrong article.** h07 (voidability under duress): gold is article 127, the retrievers return 125, 126, 138 or 140. h02 (a person's domicile): gold 40, retrieved 41 and 42. h19 (abuse of ownership): gold 807, retrieved 805 and 818. Neighbouring articles are probably relevant to a lawyer, so hit@3 against a single gold article is strict for these questions.
+2. **Wrong legal topic.** h15 (employer liability for an employee's harm): gold is 174 (tort liability), every run returns articles in the 665–692 range, which are about employment contracts. The words "employer" and "worker" pull retrieval to the wrong part of the code. A re-ranker is the usual fix.
+3. **English questions on an Arabic-only index.** 8 of the 10 failures of `e5-small / ar` are English questions; `max` reduces them to 6 (small) and 4 (base).
+
+The misses were read to understand failure types only. The pipeline is not tuned to these 20 questions; any improvement is checked on new questions.
+
+### Decision
+
+- **The rule, committed before the e5-base hold-out run** (commit `b60f2d5`, section "Decision rule, written before the second hold-out look"): adopt e5-base only if its hold-out hit@3 is higher than 0.600 (at least 13 of 20); a tie or a lower score keeps e5-small.
+- **The result:** e5-base scored 0.650 (13 of 20). By that rule, e5-base should have been adopted.
+- **What we decided instead: we deviate from the rule and register e5-small / ar and en vectors, max.** The reasons:
+  1. The gain is one question (13 against 12 of 20), inside the noise of a 20-question set.
+  2. Cost. The base index is twice as large (6.72 MB against 3.36 MB, measured). The base model is also much larger than the small one (the e5-small ONNX export is 470 MB, measured; e5-base is roughly 1.1 GB, an estimate) and would need its own ONNX export and a slower query. The API already serves e5-small.
+- **What this decision does not rest on:** the query latency and the ONNX size of e5-base were not measured, so the cost argument is an estimate. MRR was higher for base on both sets (+0.105 on dev, +0.084 on the hold-out), so its gain may be real but small. The rule would have chosen base; choosing small is a judgment call, recorded as a deviation.
+- **When to revisit:** if new questions (not the current hold-out) show a clear gain for base, switching is a one-line alias change in the registry.
+
+## Problems met
+
+- **Artifact download hung** (`misses.json` could not be downloaded, retries every 90 s). The MLflow server answered 200 on every request, but the presigned download URL it returns points at `http://s3:9000/...`, the container name inside the Compose network. The host (WSL) cannot resolve `s3`. Uploading worked because it goes through the server. Fix: `127.0.0.1 s3` in `/etc/hosts` (port 9000 is published on localhost, and the signature stays valid because the `Host` header stays `s3:9000`). WSL regenerates `/etc/hosts` on restart; `generateHosts = false` in `/etc/wsl.conf` keeps it.
+- **Unpinned image:** `rustfs/rustfs:latest` in the tracking compose file; to be pinned to a digest.
+
+## Remaining steps
+
+- **Step 3 — Model registry:** register the retrieval config, alias `production`, load it by alias in the API, `promote_if_better` in `registry.py` — _pending_
+- **Step 4 — DVC:** source PDF and `civil_code.json` tracked, `dvc.yaml` stage for the parser, remote, lineage tag in MLflow — _pending_
+- **Step 5 — CI:** lint → test → faithfulness gate (< 0.75 fails, 20 questions) → build → push; branch protection; red/green screenshots — _pending_
+- **Step 6 — Terraform:** Docker provider for Postgres + RustFS + MLflow; destroy and apply — _pending_
+- **Step 7 — Continuous training:** schedule, manual and `repository_dispatch` triggers; Staging automatic, Production behind a manual approval; CT decision table — _pending_
