@@ -1,0 +1,1 @@
+{"source":"registry","name":"legal-rag-retriever","version":"1","alias":"production","run_id":"4e1da5ac6f804bd1b1f1156d2ce02deb","embedding_model":"intfloat/multilingual-e5-small","variants":["ar","en"],"fusion":"max"}

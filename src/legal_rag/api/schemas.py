@@ -44,6 +44,17 @@ class HealthResponse(BaseModel):
     embedder: str
 
 
+class ModelInfoResponse(BaseModel):
+    source: str = Field(description='"registry" (an MLflow model version) or "chroma" (baked in)')
+    name: str | None = None
+    version: str | None = None
+    alias: str | None = None
+    run_id: str | None = None
+    embedding_model: str
+    variants: list[str]
+    fusion: str
+
+
 class MetadataResponse(BaseModel):
     service_version: str
     embedding_model: str

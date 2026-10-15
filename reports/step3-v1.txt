@@ -1,0 +1,17 @@
+retriever: registry v1 variants=['ar', 'en'] fusion=max
+HIT  q01-en gold=[1] got=['Egyptian Civil Code, Article 1', 'Egyptian Civil Code, Article 200', 'Egyptian Civil Code, Article 346']
+HIT  q02-en gold=[147] got=['Egyptian Civil Code, Article 147', 'Egyptian Civil Code, Article 453', 'Egyptian Civil Code, Article 245']
+HIT  q03-en gold=[148] got=['Egyptian Civil Code, Article 148', 'Egyptian Civil Code, Article 124', 'Egyptian Civil Code, Article 150']
+HIT  q04-en gold=[163] got=['Egyptian Civil Code, Article 163', 'Egyptian Civil Code, Article 179', 'Egyptian Civil Code, Article 175']
+HIT  q05-en gold=[44] got=['Egyptian Civil Code, Article 46', 'Egyptian Civil Code, Article 44', 'Egyptian Civil Code, Article 518']
+HIT  q06-en gold=[89] got=['Egyptian Civil Code, Article 89', 'Egyptian Civil Code, Article 101', 'Egyptian Civil Code, Article 678']
+HIT  q07-en gold=[125] got=['Egyptian Civil Code, Article 140', 'Egyptian Civil Code, Article 125', 'Egyptian Civil Code, Article 126']
+HIT  q08-en gold=[141] got=['Egyptian Civil Code, Article 144', 'Egyptian Civil Code, Article 1033', 'Egyptian Civil Code, Article 141']
+HIT  q09-en gold=[157] got=['Egyptian Civil Code, Article 161', 'Egyptian Civil Code, Article 157', 'Egyptian Civil Code, Article 124']
+HIT  q10-en gold=[169] got=['Egyptian Civil Code, Article 169', 'Egyptian Civil Code, Article 168', 'Egyptian Civil Code, Article 166']
+HIT  q11-en gold=[172] got=['Egyptian Civil Code, Article 172', 'Egyptian Civil Code, Article 171', 'Egyptian Civil Code, Article 752']
+HIT  q12-en gold=[226] got=['Egyptian Civil Code, Article 226', 'Egyptian Civil Code, Article 255', 'Egyptian Civil Code, Article 228']
+HIT  q13-en gold=[418] got=['Egyptian Civil Code, Article 418', 'Egyptian Civil Code, Article 467', 'Egyptian Civil Code, Article 419']
+HIT  q14-en gold=[558] got=['Egyptian Civil Code, Article 558', 'Egyptian Civil Code, Article 1014', 'Egyptian Civil Code, Article 597']
+HIT  q15-en gold=[805] got=['Egyptian Civil Code, Article 805', 'Egyptian Civil Code, Article 638', 'Egyptian Civil Code, Article 960']
+hit@3 (en) = 15/15 = 1.000

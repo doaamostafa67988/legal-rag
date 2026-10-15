@@ -28,6 +28,10 @@ class Settings(BaseSettings):
         default="http://localhost:5000", validation_alias="MLFLOW_TRACKING_URI"
     )
     low_score_threshold: float = 0.75  # provisional: calibrate with off-topic queries
+    # When set (e.g. models:/legal-rag-retriever@production) the API serves the registered
+    # retriever instead of the Chroma index baked into the image.
+    registry_model_uri: str | None = None
+    registry_cache_dir: Path = ROOT / "registry_cache"
     host: str = "0.0.0.0"
     port: int = 8000
 
