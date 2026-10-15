@@ -28,6 +28,7 @@ import numpy as np
 from legal_rag.config import ROOT, settings
 from legal_rag.data import Article, load_corpus
 from legal_rag.evaluate import DEFAULT_QUESTIONS, evaluate, load_questions
+from legal_rag.lineage import data_lineage
 from legal_rag.rag import E5Embedder, Embedder, Hit
 
 DEFAULT_CACHE = ROOT / "data" / "cache"
@@ -389,6 +390,7 @@ def main(argv: list[str] | None = None) -> None:
         tags={
             "git_commit": git_commit(),
             "data_version": corpus_hash[:12],
+            **data_lineage(),  # dvc_source_pdf_md5, dvc_corpus_md5, dvc_in_sync (from dvc.lock)
             "author": git_author(),
             "framework": "sentence-transformers + numpy",
         },

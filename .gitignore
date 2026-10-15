@@ -27,7 +27,8 @@ chroma_db/
 *:Zone.Identifier
 
 # Exported model artifacts (large; tracked with DVC in Module 2)
-models/
+models/*
+!models/*.dvc
 
 .coverage
 htmlcov/

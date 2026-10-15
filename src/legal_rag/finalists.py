@@ -40,6 +40,7 @@ from legal_rag.experiments import (
     sweep_configs,
 )
 from legal_rag.generate import GroqChat, build_prompt
+from legal_rag.lineage import data_lineage
 from legal_rag.rag import E5Embedder
 
 EXPERIMENT = "legal-rag-finalists"
@@ -130,6 +131,7 @@ def build_context(questions_path: Path, articles: list, questions: list) -> RunC
         tags={
             "git_commit": git_commit(),
             "data_version": corpus_hash[:12],
+            **data_lineage(),  # dvc_source_pdf_md5, dvc_corpus_md5, dvc_in_sync (from dvc.lock)
             "author": git_author(),
             "framework": "sentence-transformers + numpy",
         },

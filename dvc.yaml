@@ -1,0 +1,17 @@
+# The corpus is a build product of the source PDF: `dvc repro` rebuilds it, `dvc pull` fetches
+# both. The PDF itself is tracked by data/raw/laws.pdf.dvc (it is copyrighted: never in git).
+stages:
+  parse:
+    cmd: uv run --group offline python -m legal_rag.parse_civil_code
+      data/raw/laws.pdf data/processed/civil_code.json
+    deps:
+    - data/raw/laws.pdf
+    - src/legal_rag/parse_civil_code.py
+    outs:
+    - data/processed/civil_code.json
+  export:
+    cmd: uv run --group offline --group export python -m legal_rag.export
+    deps:
+    - src/legal_rag/export.py
+    outs:
+    - models/e5-small-onnx
