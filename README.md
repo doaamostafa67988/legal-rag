@@ -1,4 +1,5 @@
 # legal-rag
+![CI](https://github.com/doaamostafa67988/legal-rag/actions/workflows/ci.yml/badge.svg)
 
 Bilingual (Arabic / English) question answering over the Egyptian Civil Code. A question is
 embedded with `multilingual-e5-small` (served through ONNX Runtime), the closest articles are
