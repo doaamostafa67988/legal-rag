@@ -3,3 +3,6 @@
 ['remote "storage"']
     url = s3://dvc
     endpointurl = http://localhost:9000
+['remote "gdrive"']
+    url = gdrive://17-xc55g5eC9_AXbAH5VsJOKW5A0QPswX
+    gdrive_use_service_account = true
