@@ -1,0 +1,21 @@
+# Serve the retriever the model registry says is in production, instead of the index baked in the
+# image. Needs the tracking stack to be up (docker-compose.tracking.yml).
+#
+#   docker compose --env-file .env -f docker/docker-compose.yml \
+#     -f docker/docker-compose.registry.yml up
+#
+# Moving the `production` alias in the MLflow UI and restarting the api changes what is served:
+# no code change and no rebuild. Without this file the api serves the baked-in index and does
+# not depend on the tracking stack.
+services:
+  api:
+    environment:
+      LEGAL_RAG_REGISTRY_MODEL_URI: ${LEGAL_RAG_REGISTRY_MODEL_URI:-models:/legal-rag-retriever@production}
+      LEGAL_RAG_REGISTRY_CACHE_DIR: /tmp/registry_cache # appuser cannot write under /app
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    networks: [default, tracking] # reach the MLflow server and the object store (s3) by name
+
+networks:
+  tracking:
+    external: true
+    name: legal-rag-tracking_default # made by docker-compose.tracking.yml
