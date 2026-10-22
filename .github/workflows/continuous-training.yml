@@ -1,0 +1,177 @@
+# Continuous training: trigger -> dvc pull -> validate data -> train -> evaluate
+#                      -> gate (better than production?) -> promote to Staging -> build image -> notify
+#
+# Runs on the self-hosted runner (label `legal-rag`) because it needs the MLflow server and the
+# registry on this machine. It is safe on a public repository only because nothing here runs for
+# pull requests: the three triggers below can be started only by someone with write access.
+#
+# Staging is automatic. Production is never automatic: the last job waits for a person to approve
+# the `production` environment (Settings > Environments > production > Required reviewers).
+name: Continuous training
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # every Monday, 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      data_ref:
+        description: "Git ref whose dvc.lock / laws.pdf.dvc define the data to train on (empty = this commit)"
+        required: false
+        default: ""
+      metric:
+        description: "Metric the gate compares (higher is better)"
+        required: false
+        default: "mrr"
+      margin:
+        description: "The candidate must beat production by more than this. A negative value lets an equal candidate through"
+        required: false
+        default: "0.0"
+  # the hook a drift detector fires into:
+  #   POST /repos/<owner>/<repo>/dispatches  {"event_type": "data-drift-detected", "client_payload": {...}}
+  repository_dispatch:
+    types: [data-drift-detected, retrain]
+
+# one training run at a time: they share one MLflow server and one registry
+concurrency:
+  group: continuous-training
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  UV_FROZEN: "1"
+  DVC_NO_ANALYTICS: "1"
+  ANONYMIZED_TELEMETRY: "False"
+  EXPERIMENT: legal-rag-ct
+  CANDIDATE_RUN: "e5-small / ar and en vectors, max" # the configuration in production
+  DATA_REF: ${{ github.event.inputs.data_ref || github.event.client_payload.data_ref || '' }}
+  METRIC: ${{ github.event.inputs.metric || github.event.client_payload.metric || 'mrr' }}
+  MARGIN: ${{ github.event.inputs.margin || github.event.client_payload.margin || '0.0' }}
+
+jobs:
+  stage:
+    runs-on: [self-hosted, legal-rag]
+    timeout-minutes: 90
+    env:
+      GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_CREDENTIALS_DATA }}
+    outputs:
+      promoted: ${{ steps.gate.outputs.promoted }}
+      version: ${{ steps.gate.outputs.version }}
+    steps:
+      - name: Trigger
+        run: |
+          echo "event: ${{ github.event_name }}"
+          echo "data_ref='${DATA_REF}' metric=${METRIC} margin=${MARGIN}"
+          # the inputs end up in shell commands below: accept only what they should look like
+          [[ -z "$DATA_REF" || "$DATA_REF" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "bad data_ref"; exit 1; }
+          [[ "$METRIC" =~ ^[a-z0-9_]+$ ]] || { echo "bad metric"; exit 1; }
+          [[ "$MARGIN" =~ ^-?[0-9]+([.][0-9]+)?$ ]] || { echo "bad margin"; exit 1; }
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # data_ref can be any commit or tag
+
+      - name: Pick the data version
+        if: env.DATA_REF != ''
+        run: git checkout "$DATA_REF" -- dvc.yaml dvc.lock data/raw/laws.pdf.dvc
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync
+
+      - name: dvc pull
+        run: |
+          # a cache outside the workspace: the checkout is cleaned on every run
+          uv run dvc cache dir --local "$HOME/.cache/legal-rag-dvc"
+          uv run dvc pull -r gdrive data/processed/civil_code.json models/e5-small-onnx
+
+      - name: Validate data
+        run: uv run python -m legal_rag.validate_data
+
+      - name: Train the candidate
+        run: |
+          uv run python -m legal_rag.experiments \
+            --models intfloat/multilingual-e5-small \
+            --only "ar and en vectors, max" \
+            --experiment "$EXPERIMENT"
+
+      - name: Evaluate and register the candidate
+        id: candidate
+        run: |
+          run_id=$(uv run python -m legal_rag.ct run-id --experiment "$EXPERIMENT" --run-name "$CANDIDATE_RUN")
+          echo "run_id=${run_id}" >> "$GITHUB_OUTPUT"
+          uv run python -m legal_rag.register --run-name "$CANDIDATE_RUN" --experiment "$EXPERIMENT"
+          uv run python -m legal_rag.registry show
+
+      # exits 0 whether or not the candidate wins: a lost challenge is not a build failure
+      - name: Gate (better than production?) and promote to Staging
+        id: gate
+        run: |
+          uv run python -m legal_rag.ct gate \
+            --run-id "${{ steps.candidate.outputs.run_id }}" --metric "$METRIC" --margin "$MARGIN"
+
+      # only a candidate that reached Staging gets an image
+      - name: Rebuild the index
+        if: steps.gate.outputs.promoted == 'true'
+        run: uv run python -m legal_rag.rag ingest
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.gate.outputs.promoted == 'true'
+      - uses: docker/login-action@v3
+        if: steps.gate.outputs.promoted == 'true'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - id: meta
+        if: steps.gate.outputs.promoted == 'true'
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/legal-rag
+          tags: |
+            type=sha,prefix=staging-,format=short
+            type=raw,value=staging
+      - name: Build and push the image
+        if: steps.gate.outputs.promoted == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Notify
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          status="${{ job.status }}"
+          {
+            echo "### Continuous training: ${status}"
+            echo "- trigger: ${{ github.event_name }}; staged: '${{ steps.gate.outputs.promoted }}'; version: '${{ steps.gate.outputs.version }}'"
+            echo "- run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+          # optional: a Slack message when a webhook secret exists
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            curl -fsS -X POST -H 'content-type: application/json' \
+              -d "{\"text\": \"legal-rag continuous training: ${status}, staged=${{ steps.gate.outputs.promoted }}\"}" \
+              "$SLACK_WEBHOOK_URL"
+          fi
+
+  # Waits for a person: configure required reviewers on the `production` environment.
+  promote-production:
+    needs: stage
+    if: needs.stage.outputs.promoted == 'true'
+    runs-on: [self-hosted, legal-rag]
+    timeout-minutes: 10
+    environment: production
+    steps:
+      - name: Move the production alias to the staged version
+        run: |
+          curl -fsS -X POST http://localhost:5000/api/2.0/mlflow/registered-models/alias \
+            -H 'content-type: application/json' \
+            -d '{"name": "legal-rag-retriever", "alias": "production", "version": "${{ needs.stage.outputs.version }}"}'
+          echo "### Production approved: legal-rag-retriever v${{ needs.stage.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Restart the API to load it: docker restart docker-api-1"
