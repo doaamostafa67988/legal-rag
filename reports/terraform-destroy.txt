@@ -1,0 +1,494 @@
+[0m[1mdocker_volume.pgdata: Refreshing state... [id=legal-rag-tf-pgdata][0m
+[0m[1mdocker_network.tracking: Refreshing state... [id=0eb4f1bb33e5606157e37dca8699c398b85d5099ea71eebef88c7ba0c33c4379][0m
+[0m[1mdocker_image.rustfs: Refreshing state... [id=sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688brustfs/rustfs:latest][0m
+[0m[1mdocker_volume.s3data: Refreshing state... [id=legal-rag-tf-s3data][0m
+[0m[1mdocker_image.mlflow: Refreshing state... [id=sha256:79843330b3920fbcc3d23e58b0b13a2144e62a3e8ac9ef2205e91e836929c08blegal-rag-tf-mlflow:3.17.0][0m
+[0m[1mdocker_image.postgres: Refreshing state... [id=sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080eapostgres:16-alpine][0m
+[0m[1mdocker_container.s3: Refreshing state... [id=46e7cb71901686b90cdf5b0ba9deeb499edb1aa29d254dfa62722c7277dd7143][0m
+[0m[1mdocker_container.postgres: Refreshing state... [id=250da0a9951079b07771f7734434e858472c2e7c7635fa263a08fc4cc17ebe4b][0m
+[0m[1mdocker_container.dvc_bucket: Refreshing state... [id=22156cf4cdfc4e14d9fab4e89535dd72f5975d2c407c4810f5f2414909db2a99][0m
+[0m[1mdocker_container.mlflow: Refreshing state... [id=7a1dbe72da4c4b3e0d620ae589ef5f3bdd030711bfb6acc63592d8c2b069f650][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [31m-[0m destroy[0m
+
+Terraform will perform the following actions:
+
+[1m  # docker_container.dvc_bucket[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "docker_container" "dvc_bucket" {
+      [31m-[0m[0m attach                                      = false [90m-> null[0m[0m
+      [31m-[0m[0m command                                     = [
+          [31m-[0m[0m "python",
+          [31m-[0m[0m "/ensure_bucket.py",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m container_read_refresh_timeout_milliseconds = 15000 [90m-> null[0m[0m
+      [31m-[0m[0m cpu_shares                                  = 0 [90m-> null[0m[0m
+      [31m-[0m[0m dns                                         = [] [90m-> null[0m[0m
+      [31m-[0m[0m dns_opts                                    = [] [90m-> null[0m[0m
+      [31m-[0m[0m dns_search                                  = [] [90m-> null[0m[0m
+      [31m-[0m[0m entrypoint                                  = [] [90m-> null[0m[0m
+      [31m-[0m[0m env                                         = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m exit_code                                   = 0 [90m-> null[0m[0m
+      [31m-[0m[0m group_add                                   = [] [90m-> null[0m[0m
+      [31m-[0m[0m hostname                                    = "22156cf4cdfc" [90m-> null[0m[0m
+      [31m-[0m[0m id                                          = "22156cf4cdfc4e14d9fab4e89535dd72f5975d2c407c4810f5f2414909db2a99" [90m-> null[0m[0m
+      [31m-[0m[0m image                                       = "sha256:79843330b3920fbcc3d23e58b0b13a2144e62a3e8ac9ef2205e91e836929c08b" [90m-> null[0m[0m
+      [31m-[0m[0m init                                        = false [90m-> null[0m[0m
+      [31m-[0m[0m ipc_mode                                    = "private" [90m-> null[0m[0m
+      [31m-[0m[0m log_driver                                  = "json-file" [90m-> null[0m[0m
+      [31m-[0m[0m log_opts                                    = {} [90m-> null[0m[0m
+      [31m-[0m[0m logs                                        = false [90m-> null[0m[0m
+      [31m-[0m[0m max_retry_count                             = 0 [90m-> null[0m[0m
+      [31m-[0m[0m memory                                      = 0 [90m-> null[0m[0m
+      [31m-[0m[0m memory_reservation                          = 0 [90m-> null[0m[0m
+      [31m-[0m[0m memory_swap                                 = 0 [90m-> null[0m[0m
+      [31m-[0m[0m must_run                                    = false [90m-> null[0m[0m
+      [31m-[0m[0m name                                        = "legal-rag-tf-dvc-bucket" [90m-> null[0m[0m
+      [31m-[0m[0m network_data                                = [
+          [31m-[0m[0m {
+              [31m-[0m[0m global_ipv6_prefix_length = 0
+              [31m-[0m[0m ip_prefix_length          = 0
+              [31m-[0m[0m network_name              = "legal-rag-tf-net"
+                [90m# (5 unchanged attributes hidden)[0m[0m
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m network_mode                                = "bridge" [90m-> null[0m[0m
+      [31m-[0m[0m privileged                                  = false [90m-> null[0m[0m
+      [31m-[0m[0m publish_all_ports                           = false [90m-> null[0m[0m
+      [31m-[0m[0m read_only                                   = false [90m-> null[0m[0m
+      [31m-[0m[0m remove_volumes                              = true [90m-> null[0m[0m
+      [31m-[0m[0m restart                                     = "no" [90m-> null[0m[0m
+      [31m-[0m[0m rm                                          = false [90m-> null[0m[0m
+      [31m-[0m[0m runtime                                     = "runc" [90m-> null[0m[0m
+      [31m-[0m[0m security_opts                               = [] [90m-> null[0m[0m
+      [31m-[0m[0m shm_size                                    = 64 [90m-> null[0m[0m
+      [31m-[0m[0m start                                       = true [90m-> null[0m[0m
+      [31m-[0m[0m stdin_open                                  = false [90m-> null[0m[0m
+      [31m-[0m[0m stop_timeout                                = 0 [90m-> null[0m[0m
+      [31m-[0m[0m storage_opts                                = {} [90m-> null[0m[0m
+      [31m-[0m[0m sysctls                                     = {} [90m-> null[0m[0m
+      [31m-[0m[0m tmpfs                                       = {} [90m-> null[0m[0m
+      [31m-[0m[0m tty                                         = false [90m-> null[0m[0m
+      [31m-[0m[0m wait                                        = false [90m-> null[0m[0m
+      [31m-[0m[0m wait_timeout                                = 60 [90m-> null[0m[0m
+        [90m# (8 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m networks_advanced {
+          [31m-[0m[0m aliases      = [] [90m-> null[0m[0m
+          [31m-[0m[0m name         = "legal-rag-tf-net" [90m-> null[0m[0m
+            [90m# (3 unchanged attributes hidden)[0m[0m
+        }
+    }
+
+[1m  # docker_container.mlflow[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "docker_container" "mlflow" {
+      [31m-[0m[0m attach                                      = false [90m-> null[0m[0m
+      [31m-[0m[0m command                                     = [
+          [31m-[0m[0m "sh",
+          [31m-[0m[0m "-c",
+          [31m-[0m[0m (sensitive value),
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m container_read_refresh_timeout_milliseconds = 15000 [90m-> null[0m[0m
+      [31m-[0m[0m cpu_shares                                  = 0 [90m-> null[0m[0m
+      [31m-[0m[0m dns                                         = [] [90m-> null[0m[0m
+      [31m-[0m[0m dns_opts                                    = [] [90m-> null[0m[0m
+      [31m-[0m[0m dns_search                                  = [] [90m-> null[0m[0m
+      [31m-[0m[0m entrypoint                                  = [] [90m-> null[0m[0m
+      [31m-[0m[0m env                                         = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m group_add                                   = [] [90m-> null[0m[0m
+      [31m-[0m[0m hostname                                    = "7a1dbe72da4c" [90m-> null[0m[0m
+      [31m-[0m[0m id                                          = "7a1dbe72da4c4b3e0d620ae589ef5f3bdd030711bfb6acc63592d8c2b069f650" [90m-> null[0m[0m
+      [31m-[0m[0m image                                       = "sha256:79843330b3920fbcc3d23e58b0b13a2144e62a3e8ac9ef2205e91e836929c08b" [90m-> null[0m[0m
+      [31m-[0m[0m init                                        = false [90m-> null[0m[0m
+      [31m-[0m[0m ipc_mode                                    = "private" [90m-> null[0m[0m
+      [31m-[0m[0m log_driver                                  = "json-file" [90m-> null[0m[0m
+      [31m-[0m[0m log_opts                                    = {} [90m-> null[0m[0m
+      [31m-[0m[0m logs                                        = false [90m-> null[0m[0m
+      [31m-[0m[0m max_retry_count                             = 0 [90m-> null[0m[0m
+      [31m-[0m[0m memory                                      = 0 [90m-> null[0m[0m
+      [31m-[0m[0m memory_reservation                          = 0 [90m-> null[0m[0m
+      [31m-[0m[0m memory_swap                                 = 0 [90m-> null[0m[0m
+      [31m-[0m[0m must_run                                    = true [90m-> null[0m[0m
+      [31m-[0m[0m name                                        = "legal-rag-tf-mlflow" [90m-> null[0m[0m
+      [31m-[0m[0m network_data                                = [
+          [31m-[0m[0m {
+              [31m-[0m[0m gateway                   = "172.20.0.1"
+              [31m-[0m[0m global_ipv6_prefix_length = 0
+              [31m-[0m[0m ip_address                = "172.20.0.5"
+              [31m-[0m[0m ip_prefix_length          = 16
+              [31m-[0m[0m mac_address               = "aa:47:96:e8:74:2b"
+              [31m-[0m[0m network_name              = "legal-rag-tf-net"
+                [90m# (2 unchanged attributes hidden)[0m[0m
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m network_mode                                = "bridge" [90m-> null[0m[0m
+      [31m-[0m[0m privileged                                  = false [90m-> null[0m[0m
+      [31m-[0m[0m publish_all_ports                           = false [90m-> null[0m[0m
+      [31m-[0m[0m read_only                                   = false [90m-> null[0m[0m
+      [31m-[0m[0m remove_volumes                              = true [90m-> null[0m[0m
+      [31m-[0m[0m restart                                     = "unless-stopped" [90m-> null[0m[0m
+      [31m-[0m[0m rm                                          = false [90m-> null[0m[0m
+      [31m-[0m[0m runtime                                     = "runc" [90m-> null[0m[0m
+      [31m-[0m[0m security_opts                               = [] [90m-> null[0m[0m
+      [31m-[0m[0m shm_size                                    = 64 [90m-> null[0m[0m
+      [31m-[0m[0m start                                       = true [90m-> null[0m[0m
+      [31m-[0m[0m stdin_open                                  = false [90m-> null[0m[0m
+      [31m-[0m[0m stop_timeout                                = 0 [90m-> null[0m[0m
+      [31m-[0m[0m storage_opts                                = {} [90m-> null[0m[0m
+      [31m-[0m[0m sysctls                                     = {} [90m-> null[0m[0m
+      [31m-[0m[0m tmpfs                                       = {} [90m-> null[0m[0m
+      [31m-[0m[0m tty                                         = false [90m-> null[0m[0m
+      [31m-[0m[0m wait                                        = true [90m-> null[0m[0m
+      [31m-[0m[0m wait_timeout                                = 60 [90m-> null[0m[0m
+        [90m# (8 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m healthcheck {
+          [31m-[0m[0m interval       = "5s" [90m-> null[0m[0m
+          [31m-[0m[0m retries        = 20 [90m-> null[0m[0m
+          [31m-[0m[0m start_interval = "0s" [90m-> null[0m[0m
+          [31m-[0m[0m start_period   = "20s" [90m-> null[0m[0m
+          [31m-[0m[0m test           = [
+              [31m-[0m[0m "CMD",
+              [31m-[0m[0m "python",
+              [31m-[0m[0m "-c",
+              [31m-[0m[0m "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')",
+            ] [90m-> null[0m[0m
+          [31m-[0m[0m timeout        = "3s" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m networks_advanced {
+          [31m-[0m[0m aliases      = [
+              [31m-[0m[0m "mlflow",
+            ] [90m-> null[0m[0m
+          [31m-[0m[0m name         = "legal-rag-tf-net" [90m-> null[0m[0m
+            [90m# (3 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m ports {
+          [31m-[0m[0m external = 5001 [90m-> null[0m[0m
+          [31m-[0m[0m internal = 5000 [90m-> null[0m[0m
+          [31m-[0m[0m ip       = "0.0.0.0" [90m-> null[0m[0m
+          [31m-[0m[0m protocol = "tcp" [90m-> null[0m[0m
+        }
+    }
+
+[1m  # docker_container.postgres[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "docker_container" "postgres" {
+      [31m-[0m[0m attach                                      = false [90m-> null[0m[0m
+      [31m-[0m[0m command                                     = [
+          [31m-[0m[0m "postgres",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m container_read_refresh_timeout_milliseconds = 15000 [90m-> null[0m[0m
+      [31m-[0m[0m cpu_shares                                  = 0 [90m-> null[0m[0m
+      [31m-[0m[0m dns                                         = [] [90m-> null[0m[0m
+      [31m-[0m[0m dns_opts                                    = [] [90m-> null[0m[0m
+      [31m-[0m[0m dns_search                                  = [] [90m-> null[0m[0m
+      [31m-[0m[0m entrypoint                                  = [
+          [31m-[0m[0m "docker-entrypoint.sh",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m env                                         = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m group_add                                   = [] [90m-> null[0m[0m
+      [31m-[0m[0m hostname                                    = "250da0a99510" [90m-> null[0m[0m
+      [31m-[0m[0m id                                          = "250da0a9951079b07771f7734434e858472c2e7c7635fa263a08fc4cc17ebe4b" [90m-> null[0m[0m
+      [31m-[0m[0m image                                       = "sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea" [90m-> null[0m[0m
+      [31m-[0m[0m init                                        = false [90m-> null[0m[0m
+      [31m-[0m[0m ipc_mode                                    = "private" [90m-> null[0m[0m
+      [31m-[0m[0m log_driver                                  = "json-file" [90m-> null[0m[0m
+      [31m-[0m[0m log_opts                                    = {} [90m-> null[0m[0m
+      [31m-[0m[0m logs                                        = false [90m-> null[0m[0m
+      [31m-[0m[0m max_retry_count                             = 0 [90m-> null[0m[0m
+      [31m-[0m[0m memory                                      = 0 [90m-> null[0m[0m
+      [31m-[0m[0m memory_reservation                          = 0 [90m-> null[0m[0m
+      [31m-[0m[0m memory_swap                                 = 0 [90m-> null[0m[0m
+      [31m-[0m[0m must_run                                    = true [90m-> null[0m[0m
+      [31m-[0m[0m name                                        = "legal-rag-tf-postgres" [90m-> null[0m[0m
+      [31m-[0m[0m network_data                                = [
+          [31m-[0m[0m {
+              [31m-[0m[0m gateway                   = "172.20.0.1"
+              [31m-[0m[0m global_ipv6_prefix_length = 0
+              [31m-[0m[0m ip_address                = "172.20.0.3"
+              [31m-[0m[0m ip_prefix_length          = 16
+              [31m-[0m[0m mac_address               = "e2:88:44:f6:66:3e"
+              [31m-[0m[0m network_name              = "legal-rag-tf-net"
+                [90m# (2 unchanged attributes hidden)[0m[0m
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m network_mode                                = "bridge" [90m-> null[0m[0m
+      [31m-[0m[0m privileged                                  = false [90m-> null[0m[0m
+      [31m-[0m[0m publish_all_ports                           = false [90m-> null[0m[0m
+      [31m-[0m[0m read_only                                   = false [90m-> null[0m[0m
+      [31m-[0m[0m remove_volumes                              = true [90m-> null[0m[0m
+      [31m-[0m[0m restart                                     = "unless-stopped" [90m-> null[0m[0m
+      [31m-[0m[0m rm                                          = false [90m-> null[0m[0m
+      [31m-[0m[0m runtime                                     = "runc" [90m-> null[0m[0m
+      [31m-[0m[0m security_opts                               = [] [90m-> null[0m[0m
+      [31m-[0m[0m shm_size                                    = 64 [90m-> null[0m[0m
+      [31m-[0m[0m start                                       = true [90m-> null[0m[0m
+      [31m-[0m[0m stdin_open                                  = false [90m-> null[0m[0m
+      [31m-[0m[0m stop_signal                                 = "SIGINT" [90m-> null[0m[0m
+      [31m-[0m[0m stop_timeout                                = 0 [90m-> null[0m[0m
+      [31m-[0m[0m storage_opts                                = {} [90m-> null[0m[0m
+      [31m-[0m[0m sysctls                                     = {} [90m-> null[0m[0m
+      [31m-[0m[0m tmpfs                                       = {} [90m-> null[0m[0m
+      [31m-[0m[0m tty                                         = false [90m-> null[0m[0m
+      [31m-[0m[0m wait                                        = true [90m-> null[0m[0m
+      [31m-[0m[0m wait_timeout                                = 60 [90m-> null[0m[0m
+      [31m-[0m[0m working_dir                                 = "/" [90m-> null[0m[0m
+        [90m# (6 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m healthcheck {
+          [31m-[0m[0m interval       = "5s" [90m-> null[0m[0m
+          [31m-[0m[0m retries        = 10 [90m-> null[0m[0m
+          [31m-[0m[0m start_interval = "0s" [90m-> null[0m[0m
+          [31m-[0m[0m start_period   = "0s" [90m-> null[0m[0m
+          [31m-[0m[0m test           = [
+              [31m-[0m[0m "CMD-SHELL",
+              [31m-[0m[0m "pg_isready -U mlflow -d mlflow",
+            ] [90m-> null[0m[0m
+          [31m-[0m[0m timeout        = "3s" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m networks_advanced {
+          [31m-[0m[0m aliases      = [
+              [31m-[0m[0m "postgres",
+            ] [90m-> null[0m[0m
+          [31m-[0m[0m name         = "legal-rag-tf-net" [90m-> null[0m[0m
+            [90m# (3 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m volumes {
+          [31m-[0m[0m container_path = "/var/lib/postgresql/data" [90m-> null[0m[0m
+          [31m-[0m[0m read_only      = false [90m-> null[0m[0m
+          [31m-[0m[0m volume_name    = "legal-rag-tf-pgdata" [90m-> null[0m[0m
+            [90m# (2 unchanged attributes hidden)[0m[0m
+        }
+    }
+
+[1m  # docker_container.s3[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "docker_container" "s3" {
+      [31m-[0m[0m attach                                      = false [90m-> null[0m[0m
+      [31m-[0m[0m command                                     = [
+          [31m-[0m[0m "rustfs",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m container_read_refresh_timeout_milliseconds = 15000 [90m-> null[0m[0m
+      [31m-[0m[0m cpu_shares                                  = 0 [90m-> null[0m[0m
+      [31m-[0m[0m dns                                         = [] [90m-> null[0m[0m
+      [31m-[0m[0m dns_opts                                    = [] [90m-> null[0m[0m
+      [31m-[0m[0m dns_search                                  = [] [90m-> null[0m[0m
+      [31m-[0m[0m entrypoint                                  = [
+          [31m-[0m[0m "/entrypoint.sh",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m env                                         = (sensitive value) [90m-> null[0m[0m
+      [31m-[0m[0m group_add                                   = [] [90m-> null[0m[0m
+      [31m-[0m[0m hostname                                    = "46e7cb719016" [90m-> null[0m[0m
+      [31m-[0m[0m id                                          = "46e7cb71901686b90cdf5b0ba9deeb499edb1aa29d254dfa62722c7277dd7143" [90m-> null[0m[0m
+      [31m-[0m[0m image                                       = "sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b" [90m-> null[0m[0m
+      [31m-[0m[0m init                                        = false [90m-> null[0m[0m
+      [31m-[0m[0m ipc_mode                                    = "private" [90m-> null[0m[0m
+      [31m-[0m[0m log_driver                                  = "json-file" [90m-> null[0m[0m
+      [31m-[0m[0m log_opts                                    = {} [90m-> null[0m[0m
+      [31m-[0m[0m logs                                        = false [90m-> null[0m[0m
+      [31m-[0m[0m max_retry_count                             = 0 [90m-> null[0m[0m
+      [31m-[0m[0m memory                                      = 0 [90m-> null[0m[0m
+      [31m-[0m[0m memory_reservation                          = 0 [90m-> null[0m[0m
+      [31m-[0m[0m memory_swap                                 = 0 [90m-> null[0m[0m
+      [31m-[0m[0m must_run                                    = true [90m-> null[0m[0m
+      [31m-[0m[0m name                                        = "legal-rag-tf-s3" [90m-> null[0m[0m
+      [31m-[0m[0m network_data                                = [
+          [31m-[0m[0m {
+              [31m-[0m[0m gateway                   = "172.20.0.1"
+              [31m-[0m[0m global_ipv6_prefix_length = 0
+              [31m-[0m[0m ip_address                = "172.20.0.2"
+              [31m-[0m[0m ip_prefix_length          = 16
+              [31m-[0m[0m mac_address               = "02:0f:de:bc:ad:0b"
+              [31m-[0m[0m network_name              = "legal-rag-tf-net"
+                [90m# (2 unchanged attributes hidden)[0m[0m
+            },
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m network_mode                                = "bridge" [90m-> null[0m[0m
+      [31m-[0m[0m privileged                                  = false [90m-> null[0m[0m
+      [31m-[0m[0m publish_all_ports                           = false [90m-> null[0m[0m
+      [31m-[0m[0m read_only                                   = false [90m-> null[0m[0m
+      [31m-[0m[0m remove_volumes                              = true [90m-> null[0m[0m
+      [31m-[0m[0m restart                                     = "unless-stopped" [90m-> null[0m[0m
+      [31m-[0m[0m rm                                          = false [90m-> null[0m[0m
+      [31m-[0m[0m runtime                                     = "runc" [90m-> null[0m[0m
+      [31m-[0m[0m security_opts                               = [] [90m-> null[0m[0m
+      [31m-[0m[0m shm_size                                    = 64 [90m-> null[0m[0m
+      [31m-[0m[0m start                                       = true [90m-> null[0m[0m
+      [31m-[0m[0m stdin_open                                  = false [90m-> null[0m[0m
+      [31m-[0m[0m stop_timeout                                = 0 [90m-> null[0m[0m
+      [31m-[0m[0m storage_opts                                = {} [90m-> null[0m[0m
+      [31m-[0m[0m sysctls                                     = {} [90m-> null[0m[0m
+      [31m-[0m[0m tmpfs                                       = {} [90m-> null[0m[0m
+      [31m-[0m[0m tty                                         = false [90m-> null[0m[0m
+      [31m-[0m[0m user                                        = "rustfs" [90m-> null[0m[0m
+      [31m-[0m[0m wait                                        = false [90m-> null[0m[0m
+      [31m-[0m[0m wait_timeout                                = 60 [90m-> null[0m[0m
+      [31m-[0m[0m working_dir                                 = "/" [90m-> null[0m[0m
+        [90m# (6 unchanged attributes hidden)[0m[0m
+
+      [31m-[0m[0m networks_advanced {
+          [31m-[0m[0m aliases      = [
+              [31m-[0m[0m "s3",
+            ] [90m-> null[0m[0m
+          [31m-[0m[0m name         = "legal-rag-tf-net" [90m-> null[0m[0m
+            [90m# (3 unchanged attributes hidden)[0m[0m
+        }
+
+      [31m-[0m[0m ports {
+          [31m-[0m[0m external = 9100 [90m-> null[0m[0m
+          [31m-[0m[0m internal = 9000 [90m-> null[0m[0m
+          [31m-[0m[0m ip       = "0.0.0.0" [90m-> null[0m[0m
+          [31m-[0m[0m protocol = "tcp" [90m-> null[0m[0m
+        }
+      [31m-[0m[0m ports {
+          [31m-[0m[0m external = 9101 [90m-> null[0m[0m
+          [31m-[0m[0m internal = 9001 [90m-> null[0m[0m
+          [31m-[0m[0m ip       = "0.0.0.0" [90m-> null[0m[0m
+          [31m-[0m[0m protocol = "tcp" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m volumes {
+          [31m-[0m[0m container_path = "/data" [90m-> null[0m[0m
+          [31m-[0m[0m read_only      = false [90m-> null[0m[0m
+          [31m-[0m[0m volume_name    = "legal-rag-tf-s3data" [90m-> null[0m[0m
+            [90m# (2 unchanged attributes hidden)[0m[0m
+        }
+    }
+
+[1m  # docker_image.mlflow[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "docker_image" "mlflow" {
+      [31m-[0m[0m id           = "sha256:79843330b3920fbcc3d23e58b0b13a2144e62a3e8ac9ef2205e91e836929c08blegal-rag-tf-mlflow:3.17.0" [90m-> null[0m[0m
+      [31m-[0m[0m image_id     = "sha256:79843330b3920fbcc3d23e58b0b13a2144e62a3e8ac9ef2205e91e836929c08b" [90m-> null[0m[0m
+      [31m-[0m[0m keep_locally = true [90m-> null[0m[0m
+      [31m-[0m[0m name         = "legal-rag-tf-mlflow:3.17.0" [90m-> null[0m[0m
+      [31m-[0m[0m repo_digest  = "legal-rag-tf-mlflow@sha256:79843330b3920fbcc3d23e58b0b13a2144e62a3e8ac9ef2205e91e836929c08b" [90m-> null[0m[0m
+      [31m-[0m[0m triggers     = {
+          [31m-[0m[0m "dockerfile"    = "c28fd636752afb0717171beda97e8ba4c4de8d3f"
+          [31m-[0m[0m "ensure_bucket" = "3ae3e01e02e85b7303e52d10ad84908453212969"
+        } [90m-> null[0m[0m
+
+      [31m-[0m[0m build {
+          [31m-[0m[0m additional_contexts = [] [90m-> null[0m[0m
+          [31m-[0m[0m build_args          = {
+              [31m-[0m[0m "MLFLOW_VERSION" = "3.17.0"
+            } [90m-> null[0m[0m
+          [31m-[0m[0m cache_from          = [] [90m-> null[0m[0m
+          [31m-[0m[0m cache_to            = [] [90m-> null[0m[0m
+          [31m-[0m[0m context             = "./../docker/mlflow" [90m-> null[0m[0m
+          [31m-[0m[0m cpu_period          = 0 [90m-> null[0m[0m
+          [31m-[0m[0m cpu_quota           = 0 [90m-> null[0m[0m
+          [31m-[0m[0m cpu_shares          = 0 [90m-> null[0m[0m
+          [31m-[0m[0m dockerfile          = "Dockerfile" [90m-> null[0m[0m
+          [31m-[0m[0m extra_hosts         = [] [90m-> null[0m[0m
+          [31m-[0m[0m force_remove        = false [90m-> null[0m[0m
+          [31m-[0m[0m label               = {} [90m-> null[0m[0m
+          [31m-[0m[0m labels              = {} [90m-> null[0m[0m
+          [31m-[0m[0m memory              = 0 [90m-> null[0m[0m
+          [31m-[0m[0m memory_swap         = 0 [90m-> null[0m[0m
+          [31m-[0m[0m no_cache            = false [90m-> null[0m[0m
+          [31m-[0m[0m pull_parent         = false [90m-> null[0m[0m
+          [31m-[0m[0m remove              = true [90m-> null[0m[0m
+          [31m-[0m[0m security_opt        = [] [90m-> null[0m[0m
+          [31m-[0m[0m shm_size            = 0 [90m-> null[0m[0m
+          [31m-[0m[0m squash              = false [90m-> null[0m[0m
+          [31m-[0m[0m suppress_output     = false [90m-> null[0m[0m
+          [31m-[0m[0m tag                 = [] [90m-> null[0m[0m
+            [90m# (13 unchanged attributes hidden)[0m[0m
+        }
+    }
+
+[1m  # docker_image.postgres[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "docker_image" "postgres" {
+      [31m-[0m[0m id           = "sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080eapostgres:16-alpine" [90m-> null[0m[0m
+      [31m-[0m[0m image_id     = "sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea" [90m-> null[0m[0m
+      [31m-[0m[0m keep_locally = true [90m-> null[0m[0m
+      [31m-[0m[0m name         = "postgres:16-alpine" [90m-> null[0m[0m
+      [31m-[0m[0m repo_digest  = "postgres@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea" [90m-> null[0m[0m
+    }
+
+[1m  # docker_image.rustfs[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "docker_image" "rustfs" {
+      [31m-[0m[0m id           = "sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688brustfs/rustfs:latest" [90m-> null[0m[0m
+      [31m-[0m[0m image_id     = "sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b" [90m-> null[0m[0m
+      [31m-[0m[0m keep_locally = true [90m-> null[0m[0m
+      [31m-[0m[0m name         = "rustfs/rustfs:latest" [90m-> null[0m[0m
+      [31m-[0m[0m repo_digest  = "rustfs/rustfs@sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b" [90m-> null[0m[0m
+    }
+
+[1m  # docker_network.tracking[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "docker_network" "tracking" {
+      [31m-[0m[0m attachable   = false [90m-> null[0m[0m
+      [31m-[0m[0m driver       = "bridge" [90m-> null[0m[0m
+      [31m-[0m[0m id           = "0eb4f1bb33e5606157e37dca8699c398b85d5099ea71eebef88c7ba0c33c4379" [90m-> null[0m[0m
+      [31m-[0m[0m ingress      = false [90m-> null[0m[0m
+      [31m-[0m[0m internal     = false [90m-> null[0m[0m
+      [31m-[0m[0m ipam_driver  = "default" [90m-> null[0m[0m
+      [31m-[0m[0m ipam_options = {} [90m-> null[0m[0m
+      [31m-[0m[0m ipv6         = false [90m-> null[0m[0m
+      [31m-[0m[0m name         = "legal-rag-tf-net" [90m-> null[0m[0m
+      [31m-[0m[0m options      = {} [90m-> null[0m[0m
+      [31m-[0m[0m scope        = "local" [90m-> null[0m[0m
+
+      [31m-[0m[0m ipam_config {
+          [31m-[0m[0m aux_address = {} [90m-> null[0m[0m
+          [31m-[0m[0m gateway     = "172.20.0.1" [90m-> null[0m[0m
+          [31m-[0m[0m subnet      = "172.20.0.0/16" [90m-> null[0m[0m
+            [90m# (1 unchanged attribute hidden)[0m[0m
+        }
+    }
+
+[1m  # docker_volume.pgdata[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "docker_volume" "pgdata" {
+      [31m-[0m[0m driver      = "local" [90m-> null[0m[0m
+      [31m-[0m[0m driver_opts = {} [90m-> null[0m[0m
+      [31m-[0m[0m id          = "legal-rag-tf-pgdata" [90m-> null[0m[0m
+      [31m-[0m[0m mountpoint  = "/var/lib/docker/volumes/legal-rag-tf-pgdata/_data" [90m-> null[0m[0m
+      [31m-[0m[0m name        = "legal-rag-tf-pgdata" [90m-> null[0m[0m
+    }
+
+[1m  # docker_volume.s3data[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "docker_volume" "s3data" {
+      [31m-[0m[0m driver      = "local" [90m-> null[0m[0m
+      [31m-[0m[0m driver_opts = {} [90m-> null[0m[0m
+      [31m-[0m[0m id          = "legal-rag-tf-s3data" [90m-> null[0m[0m
+      [31m-[0m[0m mountpoint  = "/var/lib/docker/volumes/legal-rag-tf-s3data/_data" [90m-> null[0m[0m
+      [31m-[0m[0m name        = "legal-rag-tf-s3data" [90m-> null[0m[0m
+    }
+
+[1mPlan:[0m [0m0 to add, 0 to change, 10 to destroy.
+
+Changes to Outputs:
+  [31m-[0m[0m console_url = "http://localhost:9101" [90m-> null[0m[0m
+  [31m-[0m[0m containers  = [
+      [31m-[0m[0m "legal-rag-tf-postgres",
+      [31m-[0m[0m "legal-rag-tf-s3",
+      [31m-[0m[0m "legal-rag-tf-mlflow",
+    ] [90m-> null[0m[0m
+  [31m-[0m[0m dvc_remote  = "dvc remote add -d storage s3://dvc && dvc remote modify storage endpointurl http://localhost:9100" [90m-> null[0m[0m
+  [31m-[0m[0m mlflow_url  = "http://localhost:5001" [90m-> null[0m[0m
+  [31m-[0m[0m s3_endpoint = "http://localhost:9100" [90m-> null[0m[0m
+[0m[1mdocker_container.dvc_bucket: Destroying... [id=22156cf4cdfc4e14d9fab4e89535dd72f5975d2c407c4810f5f2414909db2a99][0m[0m
+[0m[1mdocker_container.mlflow: Destroying... [id=7a1dbe72da4c4b3e0d620ae589ef5f3bdd030711bfb6acc63592d8c2b069f650][0m[0m
+[0m[1mdocker_container.dvc_bucket: Destruction complete after 0s[0m
+[0m[1mdocker_container.mlflow: Destruction complete after 0s[0m
+[0m[1mdocker_image.mlflow: Destroying... [id=sha256:79843330b3920fbcc3d23e58b0b13a2144e62a3e8ac9ef2205e91e836929c08blegal-rag-tf-mlflow:3.17.0][0m[0m
+[0m[1mdocker_container.postgres: Destroying... [id=250da0a9951079b07771f7734434e858472c2e7c7635fa263a08fc4cc17ebe4b][0m[0m
+[0m[1mdocker_container.s3: Destroying... [id=46e7cb71901686b90cdf5b0ba9deeb499edb1aa29d254dfa62722c7277dd7143][0m[0m
+[0m[1mdocker_image.mlflow: Destruction complete after 0s[0m
+[0m[1mdocker_container.postgres: Destruction complete after 5s[0m
+[0m[1mdocker_volume.pgdata: Destroying... [id=legal-rag-tf-pgdata][0m[0m
+[0m[1mdocker_image.postgres: Destroying... [id=sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080eapostgres:16-alpine][0m[0m
+[0m[1mdocker_image.postgres: Destruction complete after 0s[0m
+[0m[1mdocker_container.s3: Destruction complete after 6s[0m
+[0m[1mdocker_volume.s3data: Destroying... [id=legal-rag-tf-s3data][0m[0m
+[0m[1mdocker_network.tracking: Destroying... [id=0eb4f1bb33e5606157e37dca8699c398b85d5099ea71eebef88c7ba0c33c4379][0m[0m
+[0m[1mdocker_image.rustfs: Destroying... [id=sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688brustfs/rustfs:latest][0m[0m
+[0m[1mdocker_image.rustfs: Destruction complete after 0s[0m
+[0m[1mdocker_volume.pgdata: Destruction complete after 2s[0m
+[0m[1mdocker_volume.s3data: Destruction complete after 2s[0m
+[0m[1mdocker_network.tracking: Destruction complete after 3s[0m
+[0m[1m[32m
+Destroy complete! Resources: 10 destroyed.[0m
