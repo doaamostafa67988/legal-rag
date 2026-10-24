@@ -2,7 +2,7 @@
 
 Branch: `module-2-tracking-automation` · Tag after merge: `v0.2.0`
 
-Status: Steps 1–6 done (this file). Step 7 remains in progress.
+Status: Steps 1–7 written (this file). The first continuous-training run is pending: a manually started workflow only runs from the default branch, so it happens after the merge.
 
 ## Step 1 — Tracking infrastructure
 
@@ -53,7 +53,10 @@ Autologging is not applicable here: nothing is trained. The embedding models are
 | e5-base / ar | 0.733 | 0.642 | 1.000 | 1.000 | 3.36 |
 | e5-small / ar | 0.700 | 0.557 | 1.000 | 0.983 | 1.68 |
 
-![MLflow comparison view, legal-rag-finalists](module-2-finalists.png)
+![MLflow comparison, metrics (legal-rag-finalists)](module-2-finalists-metrics.png)
+![The same six runs, parameters and tags](module-2-finalists.png)
+
+Taken before Step 3, so the Models column is still empty; the versions are registered afterwards.
 
 How to read it:
 
@@ -103,6 +106,7 @@ The registered model is `legal-rag-retriever`. A "model" here is the retriever: 
 MLflow 3 deprecates registry stages, so the handbook's None → Staging → Production lifecycle is expressed with aliases: a version without alias is None, `staging` and `production` are the other two. Serving loads `models:/legal-rag-retriever@production`.
 
 ![Registered model, production alias on version 2](step3-registry-v2-production.png)
+![Registered model, production alias back on version 1](step3-registry-v1-production.png)
 
 ### The API loads the model from the registry
 
@@ -161,14 +165,54 @@ Continuous training (Step 7) will call it with `--target staging`: the pipeline 
 
 **Quality gate.** `python -m legal_rag.faithfulness --lang ar --threshold 0.75` fails the job when mean faithfulness drops below 0.75; the image is pushed only after it passes. Run in CI it scored 0.983 (PASS) on the 15 Arabic dev questions, all 15 answers and 15 judge scores read from the committed cache, so the run spent 0 judge tokens (51,500 without the cache). The handbook asks for 20 questions; the cached evaluation set is these 15, which is a known limit.
 
-**Red, then green.** A deliberately broken change on the branch `ci-red-demo` turned the build red, and the fix turned it green; the pull request itself runs all three jobs green.
+**Red, then green.** A pull request that raised the gate to 0.99 turned the build red: mean faithfulness is 0.983, below 0.99, so the gate exits 1, `lint` and `test` stay green and the image is not built. The real pull request is green, and so is its latest run after the Terraform and continuous-training commits.
 
-![CI red](step5-ci-red.png)
-![CI green](step5-ci-green.png)
+![CI red: the faithfulness gate fails](step5-ci-red.png)
+![CI red: the pipeline view](step5-ci-red-summary.png)
+![CI history on the repository: green, red, green](step5-ci-runs.png)
+![CI green: all three jobs](step5-ci-green.png)
+
+**Branch protection on `main`.** A pull request is required, and so are the three status checks `lint`, `test` and `build`, with the branch up to date, so a red check cannot be merged.
+
+![Branch protection rule for main](step5-branch-protection.png)
 
 **Design choices.**
 - Hosted GitHub runners, because the repository is public: a self-hosted runner would execute code from other people's pull requests on this machine. The price is that CI cannot reach the MLflow server on `localhost`, so the registry-based `promote_if_better` gate is not in CI. The gate that runs there is the faithfulness one.
 - Secrets (Docker Hub, the Drive service account, Groq) are repository secrets. Pull requests from forks build but do not push, since secrets are not passed to them.
+
+## Step 6 — Terraform
+
+The no-cloud infrastructure path uses the Terraform Docker provider to manage PostgreSQL, RustFS, and MLflow locally. The infrastructure was initialized, formatted, validated, planned, applied, destroyed, and applied again successfully. The smoke test passed: MLflow answered its health check and successfully wrote to its database.
+
+The provider version is pinned in `infra/.terraform.lock.hcl`. Terraform state and local plan files are excluded from Git because state can contain secrets and local execution details.
+
+### Why Terraform State Should Not Be Committed
+
+Terraform’s state file records every attribute of every resource in clear text, including values marked sensitive (here the database password and the object-store keys), so committing it publishes secrets. It is also machine-written and changes on every apply, so it causes merge conflicts, and two people applying from different copies overwrite each other’s view of the infrastructure. A remote backend (an object-store bucket, GCS, Terraform Cloud) keeps one shared, encrypted, versioned copy outside git and locks it while someone applies, which a local file cannot do.
+
+## Step 7 — Continuous training
+
+`.github/workflows/continuous-training.yml` implements trigger → dvc pull → validate data → train → evaluate → gate → promote to Staging → build image → notify. It runs on the self-hosted runner (label `legal-rag`) because it needs the MLflow server and the registry on this machine. It never runs for pull requests, so a self-hosted runner is safe on a public repository.
+
+**Three triggers.** A weekly cron (Monday 03:00 UTC); `workflow_dispatch` with the inputs `data_ref` (a git ref whose `dvc.lock` defines the data to use), `metric` and `margin`; and `repository_dispatch` (`data-drift-detected`, `retrain`), the hook a drift detector fires into. The inputs are validated before they reach any shell command.
+
+**Pipeline.**
+1. `dvc pull` fetches the corpus and the encoder, optionally at the data version given by `data_ref`.
+2. `legal_rag.validate_data` rejects a corpus with too few articles, repeated article numbers, or active articles without text.
+3. The candidate is the configuration in production (e5-small, Arabic and English vectors, `max`) trained on that data into the `legal-rag-ct` experiment, then registered as a new model version.
+4. `legal_rag.ct gate` compares it with the version behind `production` on `mrr` (hit@3 is saturated at 1.0 on the dev set) and gives it the `staging` alias only if it wins by more than a configurable margin. A candidate that loses is logged and the job exits 0: a lost challenge is not a build failure, and no image is built.
+5. A winner gets an image tagged `staging-<commit>` on Docker Hub, and the job summary (and an optional Slack message) reports the outcome.
+
+**Production is never automatic.** The last job runs in the GitHub Environment `production`, which requires a reviewer's approval before it moves the `production` alias. Staging is automatic because it costs nothing and nothing serves from it. Production needs a person because the gate checks one metric on a small dev set, so someone has to read the evidence (misses, faithfulness) before the alias moves, and a wrong legal answer served to users is worth a click.
+
+| Trigger | Implemented now | Module 5 adds |
+|---|---|---|
+| Schedule | Weekly cron, Monday 03:00 UTC | — |
+| Data drift | The `repository_dispatch` hook runs the whole pipeline | The drift detector that fires it |
+| Performance degradation | Not automatic; a person can start the workflow when live quality drops | Monitoring of live signals (low retrieval scores, feedback) that fires the same hook |
+| New labeled data | Manual: `workflow_dispatch` with a `data_ref` pointing at the new data | Automatic start when a new `dvc.lock` is merged |
+
+**Run: pending.** `workflow_dispatch` only works for a workflow file on the default branch, so the first run happens after the merge, with `margin = -0.01`: the candidate is the same configuration on the same data, its metrics tie with production, and a tie never wins, so a negative margin is how the full path (Staging version, image, approval) is exercised.
 
 ## Hold-out and data notes
 
@@ -185,16 +229,8 @@ Dev numbers are a tuning signal; the hold-out numbers above are the estimate for
 - **Google Drive: service accounts cannot upload.** The push failed with "Service Accounts do not have storage quota". Fix: upload with the owner's own OAuth credentials (a local setting, never committed) and let CI *read* with the service account, which needs no quota. Large transfers also hit `Broken pipe` / `SSL: UNEXPECTED_EOF`; retrying with a single job (`-j 1`) completed them.
 - **Docker did not start after a WSL restart** (Docker Engine runs inside WSL, not Docker Desktop). Fix: `systemctl enable --now docker`, with `systemd=true` in `/etc/wsl.conf`.
 
-## Step 6 — Terraform
-
-The no-cloud infrastructure path uses the Terraform Docker provider to manage PostgreSQL, RustFS, and MLflow locally. The infrastructure was initialized, formatted, validated, planned, applied, destroyed, and applied again successfully. The smoke test passed: MLflow answered its health check and successfully wrote to its database.
-
-The provider version is pinned in `infra/.terraform.lock.hcl`. Terraform state and local plan files are excluded from Git because state can contain secrets and local execution details.
-
-### Why Terraform State Should Not Be Committed
-
-Terraform’s state file records every attribute of every resource in clear text, including values marked sensitive (here the database password and the object-store keys), so committing it publishes secrets. It is also machine-written and changes on every apply, so it causes merge conflicts, and two people applying from different copies overwrite each other’s view of the infrastructure. A remote backend (an object-store bucket, GCS, Terraform Cloud) keeps one shared, encrypted, versioned copy outside git and locks it while someone applies, which a local file cannot do.
-
 ## Remaining steps
 
-- **Step 7 — Continuous training:** schedule, manual (`workflow_dispatch` with a data-version input) and `repository_dispatch` triggers; Staging automatic, Production behind a manual approval on a GitHub Environment; CT decision table — _pending_
+- **Review and merge:** the pull request needs two reviewers, then the merge into `main`.
+- **First continuous-training run** from `main` (`workflow_dispatch`, `margin = -0.01`), with a screenshot of the green run and the production approval.
+- **Tag `v0.2.0`** after the merge.
