@@ -121,6 +121,7 @@ resource "docker_container" "mlflow" {
     "AWS_ACCESS_KEY_ID=${var.s3_access_key}",
     "AWS_SECRET_ACCESS_KEY=${var.s3_secret_key}",
     "MLFLOW_SERVER_ALLOWED_HOSTS=${var.mlflow_allowed_hosts}",
+    "MLFLOW_SERVER_ENABLE_JOB_EXECUTION=false",
   ]
 
   ports {

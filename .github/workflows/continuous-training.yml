@@ -55,6 +55,9 @@ jobs:
     timeout-minutes: 90
     env:
       GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_CREDENTIALS_DATA }}
+      # this machine has little RAM: keep torch to two threads and do not fork tokenizers
+      OMP_NUM_THREADS: "2"
+      TOKENIZERS_PARALLELISM: "false"
     outputs:
       promoted: ${{ steps.gate.outputs.promoted }}
       version: ${{ steps.gate.outputs.version }}
@@ -67,6 +70,14 @@ jobs:
           [[ -z "$DATA_REF" || "$DATA_REF" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "bad data_ref"; exit 1; }
           [[ "$METRIC" =~ ^[a-z0-9_]+$ ]] || { echo "bad metric"; exit 1; }
           [[ "$MARGIN" =~ ^-?[0-9]+([.][0-9]+)?$ ]] || { echo "bad margin"; exit 1; }
+
+      # fail in the first seconds with a clear message, not half an hour in when the runner is starved
+      - name: Pre-flight (memory and MLflow)
+        run: |
+          avail_mb=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)
+          echo "memory available: ${avail_mb} MB"
+          [ "$avail_mb" -ge 1500 ] || { echo "less than 1500 MB free: stop other containers or raise the WSL memory (.wslconfig)"; exit 1; }
+          curl -fsS -m 5 http://localhost:5000/health > /dev/null || { echo "MLflow does not answer on :5000: start the tracking stack"; exit 1; }
 
       - uses: actions/checkout@v4
         with:
@@ -95,14 +106,16 @@ jobs:
           uv run python -m legal_rag.experiments \
             --models intfloat/multilingual-e5-small \
             --only "ar and en vectors, max" \
-            --experiment "$EXPERIMENT"
+            --experiment "$EXPERIMENT" \
+            --cache-dir "$HOME/.cache/legal-rag-embeddings"
 
       - name: Evaluate and register the candidate
         id: candidate
         run: |
           run_id=$(uv run python -m legal_rag.ct run-id --experiment "$EXPERIMENT" --run-name "$CANDIDATE_RUN")
           echo "run_id=${run_id}" >> "$GITHUB_OUTPUT"
-          uv run python -m legal_rag.register --run-name "$CANDIDATE_RUN" --experiment "$EXPERIMENT"
+          uv run python -m legal_rag.register --run-name "$CANDIDATE_RUN" --experiment "$EXPERIMENT" \
+            --cache-dir "$HOME/.cache/legal-rag-embeddings"
           uv run python -m legal_rag.registry show
 
       # exits 0 whether or not the candidate wins: a lost challenge is not a build failure
@@ -119,6 +132,8 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
         if: steps.gate.outputs.promoted == 'true'
+        with:
+          driver: docker # uses the Docker daemon's builder: no extra BuildKit container
       - uses: docker/login-action@v3
         if: steps.gate.outputs.promoted == 'true'
         with:
