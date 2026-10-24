@@ -12,7 +12,18 @@ services:
     environment:
       GROQ_API_KEY: ${GROQ_API_KEY:?set GROQ_API_KEY (see --env-file in the comment above)}
       LEGAL_RAG_LOG_LEVEL: INFO
+      # Serve the registered retriever instead of the baked-in index. Empty = baked-in index.
+      # Example: LEGAL_RAG_REGISTRY_MODEL_URI=models:/legal-rag-retriever@production
+      LEGAL_RAG_REGISTRY_MODEL_URI: ${LEGAL_RAG_REGISTRY_MODEL_URI:-}
+      LEGAL_RAG_REGISTRY_CACHE_DIR: /tmp/registry_cache # appuser cannot write under /app
+      MLFLOW_TRACKING_URI: http://mlflow:5000
     volumes:
       # swap the encoder without rebuilding; the image already has a copy baked in
       - ../models/e5-small-onnx:/app/models/e5-small-onnx:ro
+    networks: [default, tracking] # reach the MLflow server and the object store (s3) by name
     restart: unless-stopped
+
+networks:
+  tracking:
+    external: true
+    name: legal-rag-tracking_default # made by docker-compose.tracking.yml

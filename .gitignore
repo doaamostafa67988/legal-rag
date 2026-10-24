@@ -23,11 +23,19 @@ data/raw/*.pdf
 # Vector store is rebuilt by legal_rag.rag ingest
 chroma_db/
 
-# Windows download markers
-*:Zone.Identifier
 
 # Exported model artifacts (large; tracked with DVC in Module 2)
-models/
+models/*
+!models/*.dvc
 
 .coverage
 htmlcov/
+data/cache/
+# Terraform: state holds every value in clear text (including passwords); providers are re-downloaded
+infra/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform.tfvars.example
+crash.log
+infra/tfplan

@@ -1,0 +1,8 @@
+# Copy to terraform.tfvars (git-ignored) to override. These values make this stack take the place
+# of docker/docker-compose.tracking.yml: stop that stack first (`docker compose ... down`).
+#
+# mlflow_port   = 5000
+# s3_port       = 9000
+# console_port  = 9001
+# db_password   = "change-me"
+# s3_secret_key = "change-me"

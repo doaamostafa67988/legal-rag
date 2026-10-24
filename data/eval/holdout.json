@@ -1,0 +1,162 @@
+[
+  {
+    "id": "h01-ar",
+    "lang": "ar",
+    "question": "من أي لحظة يُعتبر الإنسان شخصًا له حقوق في نظر القانون، ومتى تنتهي هذه الصفة؟",
+    "gold_articles": [
+      29
+    ]
+  },
+  {
+    "id": "h02-en",
+    "lang": "en",
+    "question": "How does the code define the place considered a person's legal home?",
+    "gold_articles": [
+      40
+    ]
+  },
+  {
+    "id": "h03-ar",
+    "lang": "ar",
+    "question": "ما هي الحالات التي يُعتبر فيها استعمال صاحب الحق لحقه تعسفًا؟",
+    "gold_articles": [
+      5
+    ]
+  },
+  {
+    "id": "h04-en",
+    "lang": "en",
+    "question": "May a broker or appraiser buy for himself the goods he was hired to sell or value?",
+    "gold_articles": [
+      480
+    ]
+  },
+  {
+    "id": "h05-ar",
+    "lang": "ar",
+    "question": "هل يجوز التعبير عن الإرادة بالإشارة أو بتصرف معين دون كلام أو كتابة؟",
+    "gold_articles": [
+      90
+    ]
+  },
+  {
+    "id": "h06-en",
+    "lang": "en",
+    "question": "Can a party cancel a contract if he entered it under a serious misunderstanding about an essential point?",
+    "gold_articles": [
+      120
+    ]
+  },
+  {
+    "id": "h07-ar",
+    "lang": "ar",
+    "question": "هل يمكن إبطال العقد إذا وافق عليه أحد الطرفين تحت التهديد؟",
+    "gold_articles": [
+      127
+    ]
+  },
+  {
+    "id": "h08-en",
+    "lang": "en",
+    "question": "Which contract gives a creditor a security right over real estate to guarantee his debt?",
+    "gold_articles": [
+      1030
+    ]
+  },
+  {
+    "id": "h09-ar",
+    "lang": "ar",
+    "question": "هل يجوز للقاضي تفسير العقد بعيدًا عن ألفاظه إذا كانت عباراته واضحة؟",
+    "gold_articles": [
+      150
+    ]
+  },
+  {
+    "id": "h10-en",
+    "lang": "en",
+    "question": "Is a person excused from paying compensation when the harm was caused by something beyond his control?",
+    "gold_articles": [
+      165
+    ]
+  },
+  {
+    "id": "h11-ar",
+    "lang": "ar",
+    "question": "هل يجوز لأحد المتعاقدين أن يمتنع عن تنفيذ التزامه إذا لم ينفذ الطرف الآخر التزامه المقابل؟",
+    "gold_articles": [
+      161
+    ]
+  },
+  {
+    "id": "h12-en",
+    "lang": "en",
+    "question": "Who decides the amount of compensation when the contract does not fix it?",
+    "gold_articles": [
+      221
+    ]
+  },
+  {
+    "id": "h13-ar",
+    "lang": "ar",
+    "question": "من المسؤول عن الأضرار التي تسببها الحيوانات للغير؟",
+    "gold_articles": [
+      176
+    ]
+  },
+  {
+    "id": "h14-en",
+    "lang": "en",
+    "question": "After how many years does an obligation generally become time-barred?",
+    "gold_articles": [
+      374
+    ]
+  },
+  {
+    "id": "h15-ar",
+    "lang": "ar",
+    "question": "هل يسأل صاحب العمل عن الضرر الذي يسببه عامله أثناء تأدية عمله؟",
+    "gold_articles": [
+      174
+    ]
+  },
+  {
+    "id": "h16-en",
+    "lang": "en",
+    "question": "What must a person give back if he gained a benefit at another's expense without legal justification?",
+    "gold_articles": [
+      179
+    ]
+  },
+  {
+    "id": "h17-ar",
+    "lang": "ar",
+    "question": "ما العقد الذي يتسلم فيه شخص شيئًا من آخر ليحفظه ثم يرده بعينه؟",
+    "gold_articles": [
+      718
+    ]
+  },
+  {
+    "id": "h18-en",
+    "lang": "en",
+    "question": "What does it mean when a person guarantees to a creditor that another person's debt will be paid?",
+    "gold_articles": [
+      772
+    ]
+  },
+  {
+    "id": "h19-ar",
+    "lang": "ar",
+    "question": "هل يحق للمالك استعمال ملكه كما يشاء حتى لو ألحق ضررًا بجاره؟",
+    "gold_articles": [
+      807
+    ]
+  },
+  {
+    "id": "h20-en",
+    "lang": "en",
+    "question": "How long must someone possess a property he does not own before he becomes its owner?",
+    "gold_articles": [
+      968
+    ]
+  }
+]

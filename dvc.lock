@@ -1,0 +1,32 @@
+schema: '2.0'
+stages:
+  parse:
+    cmd: uv run --group offline python -m legal_rag.parse_civil_code
+      data/raw/laws.pdf data/processed/civil_code.json
+    deps:
+    - path: data/raw/laws.pdf
+      hash: md5
+      md5: 5086ef5f16f15d856278db943e58e948
+      size: 2599703
+    - path: src/legal_rag/parse_civil_code.py
+      hash: md5
+      md5: 0981deaa52e1e923fb8c906003027ebd
+      size: 13281
+    outs:
+    - path: data/processed/civil_code.json
+      hash: md5
+      md5: ea5630c5b140f5afe2feb677b034dfed
+      size: 1404635
+  export:
+    cmd: uv run --group offline --group export python -m legal_rag.export
+    deps:
+    - path: src/legal_rag/export.py
+      hash: md5
+      md5: a669a6cc14ad585fb9a13976dab7132c
+      size: 2476
+    outs:
+    - path: models/e5-small-onnx
+      hash: md5
+      md5: e9c4c4be09cced35262faae884ac89de.dir
+      size: 487231754
+      nfiles: 4

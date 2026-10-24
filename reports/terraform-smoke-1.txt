@@ -1,0 +1,5 @@
+health: OK
+{
+  "experiment_id": "1"
+}
+ok: MLflow answers and can write to its database

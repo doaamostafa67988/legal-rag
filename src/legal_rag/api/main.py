@@ -18,11 +18,18 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from legal_rag.api.schemas import AskRequest, AskResponse, HealthResponse, MetadataResponse
+from legal_rag.api.schemas import (
+    AskRequest,
+    AskResponse,
+    HealthResponse,
+    MetadataResponse,
+    ModelInfoResponse,
+)
 from legal_rag.config import settings
 from legal_rag.generate import ChatClient, GroqChat, answer
 from legal_rag.logging_conf import configure_logging, correlation_context, correlation_id_var
-from legal_rag.rag import LegalRAG, sources_of
+from legal_rag.rag import E5Embedder, LegalRAG, sources_of
+from legal_rag.registry_rag import RegistryRAG, load_from_registry
 
 log = logging.getLogger(__name__)
 
@@ -92,15 +99,20 @@ class CorrelationIdMiddleware:
             )
 
 
-def _load_rag() -> LegalRAG:
+def _load_rag() -> LegalRAG | RegistryRAG:
+    embedder = None
     if settings.embedder_backend == "onnx":
         from legal_rag.onnx_embed import OnnxEmbedder
 
-        return LegalRAG(embedder=OnnxEmbedder())
-    return LegalRAG()
+        embedder = OnnxEmbedder()
+    if settings.registry_model_uri:  # the registry decides what is served
+        return load_from_registry(settings.registry_model_uri, embedder or E5Embedder())
+    return LegalRAG(embedder=embedder) if embedder else LegalRAG()
 
 
-def create_app(rag: LegalRAG | None = None, chat: ChatClient | None = None) -> FastAPI:
+def create_app(
+    rag: LegalRAG | RegistryRAG | None = None, chat: ChatClient | None = None
+) -> FastAPI:
     """Build the app. Tests pass fakes; production loads the real ones at startup."""
 
     @asynccontextmanager
@@ -152,6 +164,20 @@ def create_app(rag: LegalRAG | None = None, chat: ChatClient | None = None) -> F
             groq_model=settings.groq_model,
             corpus_sha256=request.app.state.corpus_sha256,
         )
+
+    @app.get("/model", response_model=ModelInfoResponse)
+    def model(request: Request) -> JSONResponse | ModelInfoResponse:
+        """Which retriever answers /ask: a registry version, or the index baked into the image."""
+        rag_ready = getattr(request.app.state, "rag", None)
+        if rag_ready is None:
+            return JSONResponse({"detail": "model not loaded"}, status_code=503)
+        info = getattr(rag_ready, "info", None) or {
+            "source": "chroma",  # build_index embeds one Arabic vector per article
+            "embedding_model": settings.embedding_model,
+            "variants": ["ar"],
+            "fusion": "single",
+        }
+        return ModelInfoResponse(**info)
 
     @app.post("/ask", response_model=AskResponse)
     def ask(body: AskRequest, request: Request) -> AskResponse:

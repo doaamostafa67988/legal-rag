@@ -8,6 +8,7 @@ dependencies = [
     "chromadb>=1.5.9",
     "fastapi>=0.142.2",
     "groq>=1.7.0",
+    "mlflow-skinny==3.17.0",
     "numpy>=1.26",
     "onnxruntime>=1.30.0",
     "pydantic-settings>=2.15.0",
@@ -25,8 +26,12 @@ dev = [
     "ipykernel>=7.4.0",
     "httpx>=0.28.1",
     "pytest-cov>=7.1.0",
+    "ragas>=0.4,<0.5",
+    "openai>=2,<3",
+    "langchain-community<0.4.2",
     { include-group = "offline" },
     { include-group = "export" },
+    { include-group = "tracking" },
 ]
 # Build-time tools, never shipped: parse the PDF, build the index with PyTorch, benchmark.
 offline = [
@@ -37,6 +42,15 @@ offline = [
 export = [
     "onnx>=1.23.2",
     "onnxscript>=0.7.2",
+]
+tracking = [
+    "dvc>=3.50",
+    "dvc-gdrive>=3.0.1",
+    "dvc-s3>=3.3.0",
+    "mlflow>=3.17.0",
+]
+loadtest = [
+    "locust>=2.46.7",
 ]
 
 [build-system]
@@ -68,4 +82,8 @@ torch = { index = "pytorch-cpu" }
 
 [tool.coverage.run]
 # one-off scripts that need the real model; exercised by `pytest -m integration --no-cov`
-omit = ["*/legal_rag/benchmark.py", "*/legal_rag/export.py"]
+omit = ["*/legal_rag/benchmark.py", "*/legal_rag/export.py", "*/legal_rag/register.py"]
+
+[tool.ruff.lint.per-file-ignores]
+# verbatim model answers: wrapping them would change the test data
+"tests/test_strip_real_answers.py" = ["E501"]
