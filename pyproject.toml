@@ -55,6 +55,10 @@ loadtest = [
 serving = [
     "bentoml==1.4.39",
 ]
+accel = [
+    "nncf>=3.4.0",
+    "openvino>=2026.4.1",
+]
 
 [build-system]
 requires = ["hatchling"]

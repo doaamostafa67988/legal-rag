@@ -1,0 +1,6 @@
+outs:
+- md5: 36efaab88fff1c7910be2d475824dd7e.dir
+  size: 470489544
+  nfiles: 2
+  hash: md5
+  path: e5-small-openvino
