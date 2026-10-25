@@ -1,0 +1,15 @@
+  0.28s  'إجابة '
+  0.34s  'تجريبية '
+  0.40s  'من '
+  0.46s  'نموذج '
+  0.51s  'وهمي، '
+  0.57s  'لا '
+  0.63s  'تُستخدم '
+  0.68s  'إلا '
+  0.74s  'في '
+  0.80s  'اختبار '
+  0.85s  'الحمل.'
+  0.86s  '\n\nالمصادر: Egyptian Civil Code, Article 44، Egyptian Civ'
+  0.86s  'il Code, Article 46، Egyptian Civil Code, Article 621'
+
+first piece after 0.28s, finished after 0.86s, 13 pieces
