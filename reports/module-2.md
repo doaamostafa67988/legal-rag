@@ -2,7 +2,7 @@
 
 Branch: `module-2-tracking-automation` · Tag after merge: `v0.2.0`
 
-Status: Steps 1–7 written (this file). The first continuous-training run is pending: a manually started workflow only runs from the default branch, so it happens after the merge.
+Status: Steps 1–7 done (this file).
 
 ## Step 1 — Tracking infrastructure
 
@@ -212,7 +212,27 @@ Terraform’s state file records every attribute of every resource in clear text
 | Performance degradation | Not automatic; a person can start the workflow when live quality drops | Monitoring of live signals (low retrieval scores, feedback) that fires the same hook |
 | New labeled data | Manual: `workflow_dispatch` with a `data_ref` pointing at the new data | Automatic start when a new `dvc.lock` is merged |
 
-**Run: pending.** `workflow_dispatch` only works for a workflow file on the default branch, so the first run happens after the merge, with `margin = -0.01`: the candidate is the same configuration on the same data, its metrics tie with production, and a tie never wins, so a negative margin is how the full path (Staging version, image, approval) is exercised.
+**Runs.** `workflow_dispatch` only works for a workflow file on the default branch, so both runs were started by hand from `main`, on the self-hosted runner.
+
+1. **`margin = 0.01`: a lost challenge.** The candidate (model version 3) is the production configuration trained again on the same data, so its `mrr` ties with production (0.8167 against 0.8167). The gain is 0.0000 and does not exceed the margin, so the gate does not promote it, nothing is built, `promote-production` is skipped, and the run stays green: a lost challenge is not a build failure.
+
+![Continuous training, candidate not promoted](step7-ct-not-promoted.png)
+
+2. **`margin = -0.01`: the whole path.** A tie never wins, and a negative margin lets it through, which is how the full path is exercised. The candidate (version 4) took the `staging` alias, the image `staging-<commit>` was pushed to Docker Hub, and `promote-production` waited for approval of the `production` environment before it moved the `production` alias. `stage` took 29 minutes on this machine; the approval step took 12 seconds.
+
+![Continuous training, full run with the production approval](step7-ct-run.png)
+
+Registry after the two runs. Version 4 has the same configuration as version 1, so the answers the service gives do not change; the aliases moved to the newest version:
+
+```
+legal-rag-retriever
+  v1  [None]  run 4e1da5ac
+  v2  [None]  run c53a0de6
+  v3  [None]  run 35837985
+  v4  [production, staging]  run 072979d7
+```
+
+Versions that lose a challenge stay in the registry without an alias (version 3), and the weekly schedule would add one each Monday, so the workflow is disabled between demonstrations.
 
 ## Hold-out and data notes
 
@@ -228,9 +248,5 @@ Dev numbers are a tuning signal; the hold-out numbers above are the estimate for
 - **DVC lost the encoder folder.** `dvc add models/e5-small-onnx` wrote a `.dvc` file with the right hash (4 files, 487 MB), but `dvc data status` never listed the folder and a later `dvc pull` deleted it from the workspace. The objects were still in the cache, so the folder was restored from there. Fix: declare it as the output of a stage (`dvc stage add -n export ...`, then `dvc commit`, which records it without re-running the export). Lesson: `dvc status` saying "up to date" is not proof; delete the folder and `dvc pull` it back.
 - **Google Drive: service accounts cannot upload.** The push failed with "Service Accounts do not have storage quota". Fix: upload with the owner's own OAuth credentials (a local setting, never committed) and let CI *read* with the service account, which needs no quota. Large transfers also hit `Broken pipe` / `SSL: UNEXPECTED_EOF`; retrying with a single job (`-j 1`) completed them.
 - **Docker did not start after a WSL restart** (Docker Engine runs inside WSL, not Docker Desktop). Fix: `systemctl enable --now docker`, with `systemd=true` in `/etc/wsl.conf`.
-
-## Remaining steps
-
-- **Review and merge:** the pull request needs two reviewers, then the merge into `main`.
-- **First continuous-training run** from `main` (`workflow_dispatch`, `margin = -0.01`), with a screenshot of the green run and the production approval.
-- **Tag `v0.2.0`** after the merge.
+- **The self-hosted runner lost contact in the middle of a run.** WSL had 3.8 GB of RAM and a full swap. Two MLflow servers were running at once (the Compose stack and the Terraform demonstration stack, whose containers restart by themselves), and each ran a dozen background job workers (`huey_consumer`): one server alone used 2.19 GB. With torch embedding the corpus on top, the runner was starved. Fixes: more WSL memory (`.wslconfig`: 5 GB RAM, 8 GB swap), `terraform destroy` of the demonstration stack once its evidence was saved, `MLFLOW_SERVER_ENABLE_JOB_EXECUTION=false` on the MLflow server (2.19 GB down to 0.88 GB, 16 processes down to 8), the embedding cache kept outside the checkout that is cleaned on every run, and a pre-flight step in the workflow that fails in seconds when less than 1500 MB are free or MLflow does not answer.
+- **Docker lost a layer and a container snapshot.** After WSL had been closed in the middle of operations, `docker compose up` failed with `failed to extract layer ... content digest not found` and `docker system df` with `rw layer snapshot not found for container`. The likely cause is WSL stopping while Docker was writing; this was not investigated further. Restarting WSL (`wsl --shutdown`) brought the daemon back and the tracking stack started again. The data volumes were never touched: nothing was run with `-v`.
