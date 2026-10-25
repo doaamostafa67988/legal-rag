@@ -49,3 +49,13 @@ def test_full_corpus_index_excludes_exactly_the_56_repealed(embedder, tmp_path):
     rag = LegalRAG(embedder=embedder, chroma_dir=tmp_path, articles=corpus)
     assert rag.documents_indexed == 1093
     assert rag.get_article(147).topic == "آثار العقد"
+
+
+def test_search_takes_a_numpy_vector_like_the_encoder_service_returns(rag, embedder):
+    """Chroma rejects numpy scalars: search must hand it plain floats."""
+    import numpy as np
+
+    vector = np.asarray(embedder.embed_query("ما هو سن الرشد"), dtype=np.float32)
+    assert [h.article_number for h in rag.search(vector, k=3)] == [
+        h.article_number for h in rag.retrieve("ما هو سن الرشد", k=3)
+    ]

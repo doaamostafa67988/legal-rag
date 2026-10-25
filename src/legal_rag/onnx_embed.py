@@ -42,5 +42,9 @@ class OnnxEmbedder:
             out.extend(self._encode(batch).tolist())
         return out
 
+    def embed_queries(self, texts: list[str]) -> list[list[float]]:
+        """Several questions through the encoder in one call (what micro-batching feeds it)."""
+        return self._encode([f"query: {t}" for t in texts]).tolist()
+
     def embed_query(self, text: str) -> list[float]:
-        return self._encode([f"query: {text}"])[0].tolist()
+        return self.embed_queries([text])[0]

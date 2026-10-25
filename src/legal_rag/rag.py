@@ -8,6 +8,7 @@ import argparse
 import logging
 import sys
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol
@@ -141,8 +142,27 @@ class LegalRAG:
             log.warning("rejected empty question")  # client mistake, not a server fault
             raise ValueError("question must not be empty")
         start = time.perf_counter()
+        log.debug("question text", extra={"question": question})  # full text only at DEBUG
+        return self.search(
+            self.embedder.embed_query(question), k, question_chars=len(question), started=start
+        )
+
+    def search(
+        self,
+        query: Sequence[float],
+        k: int = 3,
+        *,
+        question_chars: int = 0,
+        started: float | None = None,
+    ) -> list[Hit]:
+        """Rank the articles for an already embedded question.
+
+        `retrieve` embeds then calls this; a service that embeds elsewhere (the BentoML encoder)
+        calls it directly with the vector.
+        """
+        start = started if started is not None else time.perf_counter()
         result = self._collection.query(
-            query_embeddings=[self.embedder.embed_query(question)],
+            query_embeddings=[[float(x) for x in query]],  # Chroma rejects numpy scalars
             n_results=min(k, self.documents_indexed),
         )
         hits = [
@@ -162,7 +182,6 @@ class LegalRAG:
             )
         ]
         latency_ms = round((time.perf_counter() - start) * 1000, 1)
-        log.debug("question text", extra={"question": question})  # full text only at DEBUG
         log.debug(
             "retrieved",
             extra={
@@ -177,7 +196,7 @@ class LegalRAG:
                 "latency_ms": latency_ms,
                 "top_article": hits[0].article_number if hits else None,
                 "top_score": round(hits[0].score, 3) if hits else None,
-                "question_chars": len(question),
+                "question_chars": question_chars,
             },
         )
         if hits and hits[0].score < self._low_score_threshold:

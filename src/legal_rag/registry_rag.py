@@ -16,6 +16,7 @@ import json
 import logging
 import re
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -158,7 +159,21 @@ class RegistryRAG:
             log.warning("rejected empty question")
             raise ValueError("question must not be empty")
         start = time.perf_counter()
-        query = np.asarray(self.embedder.embed_query(question), dtype=np.float32)
+        return self.search(
+            self.embedder.embed_query(question), k, question_chars=len(question), started=start
+        )
+
+    def search(
+        self,
+        query: Sequence[float],
+        k: int = 3,
+        *,
+        question_chars: int = 0,
+        started: float | None = None,
+    ) -> list[Hit]:
+        """Rank the registered articles for an already embedded question."""
+        start = started if started is not None else time.perf_counter()
+        query = np.asarray(query, dtype=np.float32)
         scores = fuse([m @ query for m in self._matrices], self._fusion, self._weights)
         order = np.argsort(-scores)[: min(k, len(self._rows))]
         hits = [
@@ -178,7 +193,7 @@ class RegistryRAG:
                 "latency_ms": round((time.perf_counter() - start) * 1000, 1),
                 "top_article": hits[0].article_number if hits else None,
                 "top_score": round(hits[0].score, 3) if hits else None,
-                "question_chars": len(question),
+                "question_chars": question_chars,
                 "model_version": self.info.get("version"),
             },
         )

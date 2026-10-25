@@ -26,7 +26,7 @@ from legal_rag.api.schemas import (
     ModelInfoResponse,
 )
 from legal_rag.config import settings
-from legal_rag.generate import ChatClient, GroqChat, answer
+from legal_rag.generate import ChatClient, GroqChat, StubChat, answer
 from legal_rag.logging_conf import configure_logging, correlation_context, correlation_id_var
 from legal_rag.rag import E5Embedder, LegalRAG, sources_of
 from legal_rag.registry_rag import RegistryRAG, load_from_registry
@@ -110,6 +110,13 @@ def _load_rag() -> LegalRAG | RegistryRAG:
     return LegalRAG(embedder=embedder) if embedder else LegalRAG()
 
 
+def _load_chat() -> ChatClient:
+    if settings.chat_backend == "stub":
+        log.warning("serving with the STUB language model: load testing only")
+        return StubChat()
+    return GroqChat()
+
+
 def create_app(
     rag: LegalRAG | RegistryRAG | None = None, chat: ChatClient | None = None
 ) -> FastAPI:
@@ -120,7 +127,7 @@ def create_app(
         configure_logging(settings.log_level)
         try:
             app.state.rag = rag or _load_rag()
-            app.state.chat = chat or GroqChat()
+            app.state.chat = chat or _load_chat()
         except Exception:
             log.exception("startup failed: model or index could not be loaded")
             raise
@@ -161,7 +168,7 @@ def create_app(
             embedding_model=settings.embedding_model,
             embedder=type(rag_ready.embedder).__name__,
             documents_indexed=rag_ready.documents_indexed,
-            groq_model=settings.groq_model,
+            groq_model="stub" if settings.chat_backend == "stub" else settings.groq_model,
             corpus_sha256=request.app.state.corpus_sha256,
         )
 

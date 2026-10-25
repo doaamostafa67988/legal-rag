@@ -52,6 +52,9 @@ tracking = [
 loadtest = [
     "locust>=2.46.7",
 ]
+serving = [
+    "bentoml==1.4.39",
+]
 
 [build-system]
 requires = ["hatchling"]

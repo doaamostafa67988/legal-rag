@@ -195,3 +195,12 @@ def test_log_fields_never_collide_with_logrecord_attributes():
     logger.info("loaded", extra=log_fields(info))
     with pytest.raises(KeyError):
         logger.info("loaded", extra=info)  # the bug that stopped the container: name is reserved
+
+
+def test_search_with_a_vector_ranks_like_retrieve():
+    r = rag(bundle("max"))
+    assert [h.article_number for h in r.search(X, k=2)] == [
+        h.article_number for h in r.retrieve("q", k=2)
+    ]
+    single = rag(bundle("single", variants=("ar",), matrices=(AR,)))
+    assert single.search(np.array([0.0, 1.0]), k=1)[0].article_number == 20  # AR row 20 is Y

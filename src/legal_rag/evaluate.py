@@ -111,14 +111,24 @@ def format_report(result: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
-def load_rag(backend: str | None = None) -> LegalRAG:
-    """Build the retriever the way the API does, so the numbers describe what is served."""
+def load_rag(backend: str | None = None) -> Retriever:
+    """Build the retriever the way the API does, so the numbers describe what is served.
+
+    With LEGAL_RAG_REGISTRY_MODEL_URI set the registered model decides what is served, exactly as in
+    the API; without it the index baked into the image is used.
+    """
     backend = backend or settings.embedder_backend
+    embedder = None
     if backend == "onnx":
         from legal_rag.onnx_embed import OnnxEmbedder
 
-        return LegalRAG(embedder=OnnxEmbedder())
-    return LegalRAG()
+        embedder = OnnxEmbedder()
+    if settings.registry_model_uri:
+        from legal_rag.rag import E5Embedder
+        from legal_rag.registry_rag import load_from_registry
+
+        return load_from_registry(settings.registry_model_uri, embedder or E5Embedder())
+    return LegalRAG(embedder=embedder) if embedder else LegalRAG()
 
 
 def main(argv: list[str] | None = None) -> None:

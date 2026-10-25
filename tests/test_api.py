@@ -240,3 +240,24 @@ def test_startup_failure_is_logged_as_an_error(monkeypatch, api_log):
         pass
     levels = [r["level"] for r in api_log() if r["message"].startswith("startup failed")]
     assert levels == ["ERROR"]
+
+
+# ---- the stub LLM for load tests ----------------------------------------------------------
+
+
+def test_stub_backend_replaces_groq_and_is_visible_in_metadata(monkeypatch, rag):
+    monkeypatch.setattr(settings, "chat_backend", "stub")
+    monkeypatch.setattr(settings, "stub_chat_latency_ms", 0.0)
+    monkeypatch.setattr(api_main, "GroqChat", lambda: pytest.fail("Groq must not be used"))
+    with TestClient(create_app(rag=rag)) as c:
+        assert c.get("/metadata").json()["groq_model"] == "stub"
+        body = c.post("/ask", json={"question": QUESTION}).json()
+    assert body["answer"].strip() and body["sources"]
+
+
+def test_default_backend_is_groq(monkeypatch):
+    seen = []
+    monkeypatch.setattr(settings, "chat_backend", "groq")
+    monkeypatch.setattr(api_main, "GroqChat", lambda: seen.append(1) or object())
+    api_main._load_chat()
+    assert seen == [1]

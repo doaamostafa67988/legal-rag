@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     embedder_backend: Literal["onnx", "torch"] = "onnx"  # what the API serves with
     groq_model: str = "qwen/qwen3.8-27b"
     groq_api_key: SecretStr | None = Field(default=None, validation_alias="GROQ_API_KEY")
+    # "stub" answers after a fixed delay instead of calling the LLM: for load tests, so the test
+    # measures this service and not the provider's rate limits and network.
+    chat_backend: Literal["groq", "stub"] = "groq"
+    stub_chat_latency_ms: float = (
+        800.0  # set it to the LLM latency seen in the "answer generated" logs
+    )
     mlflow_tracking_uri: str = Field(
         default="http://localhost:5000", validation_alias="MLFLOW_TRACKING_URI"
     )
