@@ -1,0 +1,17 @@
+# Build:  uv run bentoml build -f serving/bentofile.yaml
+# Image:  uv run bentoml containerize legal_rag:latest -t <dockerhub-user>/legal-rag-bento:0.3.0
+service: "serving.service:LegalRAGService"
+labels:
+  owner: legal-rag
+  stage: serving
+include:
+  - "serving/*.py"
+  - "src/legal_rag/**/*.py"
+  - "data/processed/civil_code.json"
+  - "chroma_db/**"
+  - "models/e5-small-onnx/**"
+python:
+  requirements_txt: "serving/requirements.txt"
+docker:
+  python_version: "3.12"
+  distro: debian

@@ -1,0 +1,15 @@
+# The API for load tests: the stub LLM (no Groq calls) and fixed CPU and memory limits, so the
+# numbers are repeatable and leave cores for Locust, which runs on the same machine.
+#
+#   GROQ_API_KEY=unused docker compose -f docker/docker-compose.yml \
+#     -f docker/docker-compose.loadtest.yml up --build
+#
+# (GROQ_API_KEY only has to be set for Compose's check; the stub never uses it.)
+# Set LEGAL_RAG_STUB_CHAT_LATENCY_MS to the LLM latency in your own "answer generated" logs.
+services:
+  api:
+    environment:
+      LEGAL_RAG_CHAT_BACKEND: stub
+      LEGAL_RAG_STUB_CHAT_LATENCY_MS: ${LEGAL_RAG_STUB_CHAT_LATENCY_MS:-800}
+    cpus: 2.0
+    mem_limit: 2g
